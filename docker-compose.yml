@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: smart-heaven-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: smartheaven
+      MYSQL_USER: pedro
+      MYSQL_PASSWORD: 395967
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - smart-heaven-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Mosquitto MQTT Broker
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: smart-heaven-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+      - mosquitto_data:/mosquitto/data
+    networks:
+      - smart-heaven-network
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/#' -C 1 | grep -v Error || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smart-heaven-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=mysql+aiomysql://pedro:395967@mysql:3306/smartheaven
+      - MQTT_BROKER_HOST=mosquitto
+      - MQTT_BROKER_PORT=1883
+    volumes:
+      - ./backend:/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    networks:
+      - smart-heaven-network
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smart-heaven-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - smart-heaven-network
+    command: npm run dev -- --host
+
+networks:
+  smart-heaven-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  mosquitto_data:
