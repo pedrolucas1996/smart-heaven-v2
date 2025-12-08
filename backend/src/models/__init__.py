@@ -8,6 +8,7 @@ from src.models.lamp import Lamp
 from src.models.light import Light
 from src.models.switch_lamp_mapping import SwitchLampMapping
 from src.models.log import Log
+from src.models.mapping import Mapping
 
 __all__ = [
     "HardwareBase",
@@ -16,4 +17,5 @@ __all__ = [
     "Light",
     "SwitchLampMapping",
     "Log",
+    "Mapping",
 ]
