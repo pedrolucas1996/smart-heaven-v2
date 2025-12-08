@@ -7,9 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.core.config import settings
 from src.infra.db import init_db, close_db
 from src.services.mqtt_service import mqtt_service
+from src.services.scheduler_service import scheduler
 from src.services.light_service import LightService
 from src.services.switch_service import SwitchService
 from src.namespaces.lights import controller as lights
+from src.namespaces.lamps import controller as lamps
 from src.namespaces.switches import controller as switches
 from src.namespaces.logs import controller as logs
 from src.namespaces.system import controller as system
@@ -40,28 +42,51 @@ async def lifespan(app: FastAPI):
         await mqtt_service.connect()
         logger.info("MQTT connected")
         
-        # Subscribe to topics
+        # Subscribe to topics with async handlers
+        async def handle_state_update(topic: str, payload: str):
+            logger.info(f"State update: {topic}")
+        
+        async def handle_button_event(topic: str, payload: str):
+            logger.info(f"Button event: {payload}")
+        
+        async def handle_web_command(topic: str, payload: str):
+            logger.info(f"Web command: {payload}")
+        
         await mqtt_service.subscribe(
             f"{settings.MQTT_TOPIC_STATE}/#",
-            lambda topic, payload: logger.info(f"State update: {topic}")
+            handle_state_update
         )
         await mqtt_service.subscribe(
             settings.MQTT_TOPIC_BUTTON,
-            lambda topic, payload: logger.info(f"Button event: {payload}")
+            handle_button_event
         )
         await mqtt_service.subscribe(
             settings.MQTT_TOPIC_WEB_COMMAND,
-            lambda topic, payload: logger.info(f"Web command: {payload}")
+            handle_web_command
         )
         
         logger.info("MQTT subscriptions configured")
     except Exception as e:
         logger.error(f"Failed to connect to MQTT: {e}")
     
+    # Start cleanup scheduler
+    try:
+        await scheduler.start()
+        logger.info("Cleanup scheduler started")
+    except Exception as e:
+        logger.error(f"Failed to start scheduler: {e}")
+    
     yield
     
     # Shutdown
     logger.info("Shutting down Smart Heaven Backend...")
+    
+    # Stop scheduler
+    try:
+        await scheduler.stop()
+        logger.info("Scheduler stopped")
+    except Exception as e:
+        logger.error(f"Error stopping scheduler: {e}")
     
     try:
         await mqtt_service.disconnect()
@@ -99,6 +124,7 @@ app.add_middleware(
 # Include routers
 app.include_router(system.router, prefix="/api/v1")
 app.include_router(lights.router, prefix="/api/v1")
+app.include_router(lamps.router, prefix="/api/v1")
 app.include_router(switches.router, prefix="/api/v1")
 app.include_router(logs.router, prefix="/api/v1")
 app.include_router(websocket.router, prefix="/api/v1")

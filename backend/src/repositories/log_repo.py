@@ -18,15 +18,13 @@ class LogRepository(BaseRepository[Log]):
         self,
         comodo: str,
         estado: bool,
-        origem: str,
-        detalhes: Optional[str] = None
+        origem: str
     ) -> Log:
         """Create a new log entry."""
         return await self.create({
             "comodo": comodo,
             "estado": estado,
-            "origem": origem,
-            "detalhes": detalhes
+            "origem": origem
         })
     
     async def get_logs_by_light(
@@ -39,7 +37,7 @@ class LogRepository(BaseRepository[Log]):
         result = await self.db.execute(
             select(Log)
             .where(Log.comodo == comodo)
-            .order_by(desc(Log.timestamp))
+            .order_by(desc(Log.data_hora))
             .offset(offset)
             .limit(limit)
         )
@@ -55,7 +53,7 @@ class LogRepository(BaseRepository[Log]):
         result = await self.db.execute(
             select(Log)
             .where(Log.origem == origem)
-            .order_by(desc(Log.timestamp))
+            .order_by(desc(Log.data_hora))
             .offset(offset)
             .limit(limit)
         )
@@ -72,10 +70,10 @@ class LogRepository(BaseRepository[Log]):
         result = await self.db.execute(
             select(Log)
             .where(
-                Log.timestamp >= start_date,
-                Log.timestamp <= end_date
+                Log.data_hora >= start_date,
+                Log.data_hora <= end_date
             )
-            .order_by(desc(Log.timestamp))
+            .order_by(desc(Log.data_hora))
             .offset(offset)
             .limit(limit)
         )
@@ -85,7 +83,7 @@ class LogRepository(BaseRepository[Log]):
         """Get most recent logs."""
         result = await self.db.execute(
             select(Log)
-            .order_by(desc(Log.timestamp))
+            .order_by(desc(Log.data_hora))
             .limit(limit)
         )
         return list(result.scalars().all())

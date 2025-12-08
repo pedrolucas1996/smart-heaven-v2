@@ -1,6 +1,7 @@
 """Repository for Switch operations."""
 from typing import Optional, List
 from sqlalchemy import select, update
+from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models import Switch
@@ -32,7 +33,9 @@ class SwitchRepository(BaseRepository[Switch]):
     
     async def get_all_switches(self) -> List[Switch]:
         """Get all switches."""
-        result = await self.db.execute(select(Switch))
+        result = await self.db.execute(
+            select(Switch).options(joinedload(Switch.base))
+        )
         return list(result.scalars().all())
     
     async def get_by_base(self, base: str) -> List[Switch]:

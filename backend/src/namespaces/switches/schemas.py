@@ -23,10 +23,10 @@ class SwitchUpdate(BaseModel):
 
 class SwitchResponse(SwitchBase):
     """Schema for switch response."""
-    base: str = Field(..., description="Hardware base name")
+    base_id: int = Field(..., description="Hardware base ID")
     estado: bool = Field(..., description="Current physical button state")
     ativo: bool = Field(..., description="Whether switch is enabled")
-    data_de_atualizacao: datetime = Field(..., description="Last update timestamp")
+    data_de_atualizacao: Optional[datetime] = Field(None, description="Last update timestamp")
     
     class Config:
         from_attributes = True

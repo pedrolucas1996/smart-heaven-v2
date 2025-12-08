@@ -16,7 +16,10 @@ class LightRepository(BaseRepository[Light]):
     async def get_by_name(self, lampada: str) -> Optional[Light]:
         """Get a light by its name."""
         result = await self.db.execute(
-            select(Light).where(Light.lampada == lampada)
+            select(Light)
+            .where(Light.lampada == lampada)
+            .order_by(Light.id.desc())  # Get most recent if duplicates exist
+            .limit(1)
         )
         return result.scalar_one_or_none()
     

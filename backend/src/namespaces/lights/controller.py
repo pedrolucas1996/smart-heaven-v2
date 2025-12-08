@@ -124,17 +124,25 @@ async def control_light(
     - **acao**: Action to perform ("ligar" or "desligar")
     - **origem**: Command origin (default: "api")
     """
-    service = LightService(db)
-    
-    if command.acao == "ligar":
-        result = await service.turn_on_light(command.comodo, command.origem)
-    else:
-        result = await service.turn_off_light(command.comodo, command.origem)
-    
-    return MessageResponse(
-        message=f"Light {command.comodo} turned {command.acao}",
-        success=True
-    )
+    try:
+        service = LightService(db)
+        
+        if command.acao == "ligar":
+            result = await service.turn_on_light(command.comodo, command.origem)
+        else:
+            result = await service.turn_off_light(command.comodo, command.origem)
+        
+        return MessageResponse(
+            message=f"Light {command.comodo} turned {command.acao}",
+            success=True
+        )
+    except Exception as e:
+        import logging
+        logging.error(f"Error controlling light: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error controlling light: {str(e)}"
+        )
 
 
 @router.post("/{lampada}/toggle", response_model=MessageResponse)
