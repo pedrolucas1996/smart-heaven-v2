@@ -22,6 +22,7 @@ class BaseRepository(Generic[ModelType]):
         )
         return result.scalar_one_or_none()
     
+    
     async def get_all(
         self, 
         skip: int = 0, 
