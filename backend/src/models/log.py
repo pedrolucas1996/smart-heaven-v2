@@ -1,6 +1,7 @@
 """Event log model."""
 from datetime import datetime
-from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Index, Text,BigInteger,BIGINT
+from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Index, Text, BigInteger
+from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.orm import relationship
 
 from src.infra.db import Base
