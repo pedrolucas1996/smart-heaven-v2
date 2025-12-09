@@ -8,7 +8,9 @@ export interface WSMessage {
 
 type MessageHandler = (message: WSMessage) => void;
 
-export const useWebSocket = (url: string = 'ws://localhost:8000/api/v1/ws') => {
+export const useWebSocket = (url?: string) => {
+  // Use URL dinâmica baseada no host atual, mas porta 8000 para o backend
+  const wsUrl = url || `ws://${window.location.hostname}:8000/api/v1/ws`;
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<WSMessage | null>(null);
   const ws = useRef<WebSocket | null>(null);
@@ -16,7 +18,7 @@ export const useWebSocket = (url: string = 'ws://localhost:8000/api/v1/ws') => {
 
   useEffect(() => {
     const connect = () => {
-      ws.current = new WebSocket(url);
+      ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen = () => {
         console.log('WebSocket connected');
@@ -60,7 +62,7 @@ export const useWebSocket = (url: string = 'ws://localhost:8000/api/v1/ws') => {
         ws.current.close();
       }
     };
-  }, [url]);
+  }, [wsUrl]);
 
   const send = (data: any) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {

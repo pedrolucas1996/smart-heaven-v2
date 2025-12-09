@@ -13,6 +13,7 @@ class LampCreate(LampBase):
     """Schema for creating a new lamp."""
     base_id: int = Field(..., description="Base ID this lamp belongs to")
     estado: bool = Field(default=False, description="Initial state (on/off)")
+    invertido: bool = Field(default=False, description="Hardware inverted signal")
 
 
 class LampUpdate(BaseModel):
@@ -20,6 +21,7 @@ class LampUpdate(BaseModel):
     nome: Optional[str] = Field(None, description="Lamp name")
     base_id: Optional[int] = Field(None, description="Base ID")
     estado: Optional[bool] = Field(None, description="State (on/off)")
+    invertido: Optional[bool] = Field(None, description="Hardware inverted signal")
 
 
 class LampResponse(LampBase):
@@ -27,6 +29,7 @@ class LampResponse(LampBase):
     id: int = Field(..., description="Lamp ID")
     base_id: int = Field(..., description="Base ID")
     estado: bool = Field(..., description="Current state (on/off)")
+    invertido: bool = Field(..., description="Hardware inverted signal")
     data_de_atualizacao: datetime = Field(..., description="Last update timestamp")
     
     class Config:

@@ -11,14 +11,15 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0', // Permite acesso externo
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://192.168.31.175:8000', // IP da sua máquina
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://localhost:8000',
+        target: 'ws://192.168.31.175:8000', // IP da sua máquina
         ws: true,
       },
     },
