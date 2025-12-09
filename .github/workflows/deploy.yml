@@ -1,0 +1,33 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches: ["master"]
+
+jobs:
+  deploy:
+    name: Run deploy script on Raspberry Pi
+    # Requires a self-hosted runner installed on the Raspberry Pi
+    runs-on: [self-hosted]
+
+    steps:
+      - name: Show runner info
+        run: |
+          echo "Runner: $(uname -a)"
+          which bash || true
+
+      # Optional: You don't need to checkout the repo to run a local script,
+      # but it doesn't hurt. Uncomment if you want the repo available.
+      # - name: Checkout
+      #   uses: actions/checkout@v4
+
+      - name: Run deploy script
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -x /home/pedro/scripts/deploy-smart-heaven.sh ]; then
+            /home/pedro/scripts/deploy-smart-heaven.sh
+          else
+            echo "ERROR: /home/pedro/scripts/deploy-smart-heaven.sh not found or not executable" >&2
+            exit 1
+          fi
