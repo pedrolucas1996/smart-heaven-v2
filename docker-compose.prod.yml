@@ -8,8 +8,6 @@ services:
       dockerfile: Dockerfile
     container_name: smart-heaven-backend
     restart: unless-stopped
-    ports:
-      - "8000:8000"
     environment:
       - DATABASE_URL=mysql+aiomysql://pedro:395967@192.168.31.153:3306/smartheaven
       - MQTT_HOST=192.168.31.153
