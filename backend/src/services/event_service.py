@@ -13,6 +13,7 @@ from src.namespaces.events.schemas import (
 from src.repositories.mapping_repo import MappingRepository
 from src.repositories.lamp_repo import LampRepository
 from src.repositories.light_repo import LightRepository
+from src.repositories.button_event_repo import ButtonEventRepository
 from src.services.event_cache import event_cache
 from src.services.mqtt_service import mqtt_service
 from src.core.config import settings
@@ -28,6 +29,7 @@ class EventService:
         self.mapping_repo = MappingRepository(db)
         self.lamp_repo = LampRepository(db)
         self.light_repo = LightRepository(db)
+        self.button_event_repo = ButtonEventRepository(db)
     
     async def process_button_event(self, event: EventPayload) -> Dict:
         """
@@ -40,6 +42,20 @@ class EventService:
             Processing result with actions taken
         """
         logger.info(f"Processing button event: {event.device}/{event.button} -> {event.action}")
+        
+        # Save button event to database (always, for discovery purposes)
+        try:
+            await self.button_event_repo.create_event(
+                device=event.device,
+                button=event.button,
+                action=event.action,
+                origin="mqtt",  # Events from process_button_event come from MQTT
+                rssi=getattr(event, 'rssi', None),
+                data_hora=datetime.utcnow()
+            )
+            logger.debug(f"Button event saved to database: {event.device}/{event.button}/{event.action}")
+        except Exception as e:
+            logger.error(f"Error saving button event to database: {e}", exc_info=True)
         
         # Check for duplicate event (idempotency)
         event_hash = event_cache.generate_event_hash(
@@ -72,7 +88,7 @@ class EventService:
         # Execute each mapping
         results = []
         for mapping in mappings:
-            if not mapping.is_active:
+            if not mapping.active:
                 logger.debug(f"Skipping inactive mapping {mapping.id}")
                 continue
             
@@ -120,21 +136,31 @@ class EventService:
         target_type = mapping.target_type.lower()
         target_id = mapping.target_id
         
+        # Resolve lamp name from ID
+        lamp_name = await self._resolve_lamp_name(target_id)
+        if not lamp_name:
+            logger.error(f"Could not resolve lamp name from ID {target_id}")
+            return {
+                "mapping_id": mapping.id,
+                "status": "error",
+                "error": f"Lamp ID {target_id} not found"
+            }
+        
         # Execute based on target type
         if target_type == "lampada_on":
-            return await self._turn_on_lamp(target_id, origin="automation")
+            return await self._turn_on_lamp(lamp_name, origin="automation")
         
         elif target_type == "lampada_off":
-            return await self._turn_off_lamp(target_id, origin="automation")
+            return await self._turn_off_lamp(lamp_name, origin="automation")
         
         elif target_type == "lampada_toggle":
-            return await self._toggle_lamp(target_id, origin="automation")
+            return await self._toggle_lamp(lamp_name, origin="automation")
         
         elif target_type == "group_on":
-            return await self._control_group(target_id, True, origin="automation")
+            return await self._control_group(lamp_name, True, origin="automation")
         
         elif target_type == "group_off":
-            return await self._control_group(target_id, False, origin="automation")
+            return await self._control_group(lamp_name, False, origin="automation")
         
         else:
             logger.warning(f"Unknown target type: {target_type}")
@@ -143,6 +169,33 @@ class EventService:
                 "status": "error",
                 "error": f"Unknown target type: {target_type}"
             }
+    
+    async def _resolve_lamp_name(self, lamp_id: int) -> Optional[str]:
+        """
+        Resolve lamp name from numeric ID.
+        
+        Args:
+            lamp_id: Numeric lamp ID
+            
+        Returns:
+            Lamp name or None if not found
+        """
+        try:
+            # Try lampada table first (new)
+            lamp = await self.lamp_repo.get_by_id(lamp_id)
+            if lamp:
+                return lamp.nome
+            
+            # Fallback to luzes table (legacy)
+            light = await self.light_repo.get_by_id(lamp_id)
+            if light:
+                return light.lampada
+            
+            logger.warning(f"Lamp ID {lamp_id} not found in any table")
+            return None
+        except Exception as e:
+            logger.error(f"Error resolving lamp name from ID {lamp_id}: {e}")
+            return None
     
     async def _turn_on_lamp(self, lamp_name: str, origin: str = "automation") -> Dict:
         """Turn on a lamp."""

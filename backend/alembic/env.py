@@ -17,7 +17,7 @@ from src.infra.db import Base
 from src.core.config import settings
 
 # Import all models to ensure they're registered
-from src.models import HardwareBase, Switch, Lamp, Light, SwitchLampMapping, Log
+from src.models import HardwareBase, Switch, Lamp, Light, SwitchLampMapping, Log, Mapping, ButtonEvent
 
 # this is the Alembic Config object
 config = context.config

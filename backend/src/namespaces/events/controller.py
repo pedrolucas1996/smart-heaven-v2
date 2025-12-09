@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.infra.db import get_session
+from src.infra.db import get_db
 from src.repositories.mapping_repo import MappingRepository
 from src.repositories.lamp_repo import LampRepository
 from src.repositories.light_repo import LightRepository
@@ -25,7 +25,7 @@ event_cache = EventCache(ttl_seconds=5)
 
 
 async def get_event_service(
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_db)
 ) -> EventService:
     """Dependency to get EventService instance."""
     mapping_repo = MappingRepository(session)
@@ -99,7 +99,7 @@ async def inject_event(
     description="Get all automation mappings (active and inactive)"
 )
 async def list_mappings(
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_db)
 ) -> List[MappingResponse]:
     """
     List all automation mappings.
@@ -131,7 +131,7 @@ async def list_mappings(
 )
 async def get_mapping(
     mapping_id: int,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_db)
 ) -> MappingResponse:
     """
     Get a specific mapping by ID.
@@ -175,7 +175,7 @@ async def get_mapping(
 )
 async def create_mapping(
     mapping: MappingCreate,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_db)
 ) -> MappingResponse:
     """
     Create a new automation mapping.
@@ -222,7 +222,7 @@ async def create_mapping(
 async def update_mapping(
     mapping_id: int,
     mapping: MappingUpdate,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_db)
 ) -> MappingResponse:
     """
     Update an existing mapping.
@@ -271,7 +271,7 @@ async def update_mapping(
 )
 async def delete_mapping(
     mapping_id: int,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_db)
 ):
     """
     Delete a mapping.
@@ -313,7 +313,7 @@ async def delete_mapping(
 )
 async def activate_mapping(
     mapping_id: int,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_db)
 ) -> MappingResponse:
     """
     Activate (enable) a mapping.
@@ -359,7 +359,7 @@ async def activate_mapping(
 )
 async def deactivate_mapping(
     mapping_id: int,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_db)
 ) -> MappingResponse:
     """
     Deactivate (disable) a mapping.

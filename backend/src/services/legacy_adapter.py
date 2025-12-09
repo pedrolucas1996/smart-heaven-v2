@@ -84,12 +84,16 @@ class LegacyAdapter:
             "button" - Button press event
             "unknown" - Cannot determine
         """
-        if "state" in payload or "estado" in payload:
-            return "state"
-        
-        if "button" in payload or "botao" in payload:
+        # Check if it's a button event first (has base + botao + estado)
+        # This is the format: {"base":"Base_A1","botao":"S_Entrada","estado":"pressionado"}
+        if ("base" in payload or "device" in payload) and ("botao" in payload or "button" in payload):
             return "button"
         
+        # If has estado/state but also has comodo, it's a lamp state
+        if ("state" in payload or "estado" in payload) and "comodo" in payload:
+            return "state"
+        
+        # Generic action field indicates button
         if "action" in payload or "acao" in payload:
             return "button"
         
@@ -153,6 +157,7 @@ class LegacyAdapter:
         Convert legacy button event to modern EventPayload.
         
         Legacy format examples:
+            {"base": "Base_A1", "botao": "S_Entrada", "estado": "pressionado"}
             {"device": "ESP_BaseA", "botao": "B1", "acao": "press"}
             {"dispositivo": "Base_C", "button": "S2"}
         
@@ -164,23 +169,36 @@ class LegacyAdapter:
             Modern EventPayload
             
         Example:
-            >>> legacy = {"device": "ESP_BaseA", "botao": "B1"}
+            >>> legacy = {"base": "Base_A1", "botao": "S_Entrada", "estado": "pressionado"}
             >>> adapter = LegacyAdapter()
             >>> modern = adapter.convert_to_event_payload(legacy)
-            >>> print(modern.device)  # "ESP_BaseA"
-            >>> print(modern.button)  # "B1"
+            >>> print(modern.device)  # "Base_A1"
+            >>> print(modern.button)  # "S_Entrada"
         """
-        # Extract device name
+        # Extract device name (check base, device, dispositivo)
         device = payload.get(
-            "device",
-            payload.get("dispositivo", cls._infer_device_from_topic(topic))
+            "base",
+            payload.get("device", payload.get("dispositivo", cls._infer_device_from_topic(topic)))
         )
         
         # Extract button (handle both English and Portuguese)
         button = payload.get("button", payload.get("botao", "unknown"))
         
-        # Extract action (handle both English and Portuguese)
-        action_raw = payload.get("action", payload.get("acao", "press"))
+        # Extract action (handle multiple formats)
+        # Format 1: {"acao": "press"} or {"action": "press"}
+        # Format 2: {"estado": "pressionado"} or {"estado": "solto"}
+        action_raw = payload.get("action", payload.get("acao"))
+        
+        if not action_raw:
+            # Check estado field (Portuguese format from ESP devices)
+            estado = payload.get("estado", "")
+            if estado == "pressionado":
+                action_raw = "press"
+            elif estado == "solto":
+                action_raw = "release"
+            else:
+                action_raw = "press"  # Default
+        
         try:
             action = ButtonAction(action_raw.lower())
         except ValueError:

@@ -257,7 +257,7 @@ class MappingBase(BaseModel):
     source_action: Optional[str] = Field("press", description="Button action (press, release, changed, * for any)")
     action_type: str = Field(..., description="Action to perform (e.g., toggle_light, turn_on, turn_off)")
     target_type: str = Field(..., description="Target type (light, gate, scene, script)")
-    target_id: str = Field(..., description="Target identifier (comodo name, scene id)")
+    target_id: int = Field(..., description="Target ID (numeric ID from lamp/light table)")
     parameters_json: Optional[Dict[str, Any]] = Field(None, description="Additional parameters (JSON)")
     priority: int = Field(100, description="Execution priority (lower = higher priority)")
     description: Optional[str] = Field(None, description="Human-readable description")

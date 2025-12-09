@@ -9,8 +9,8 @@ from src.controllers.deps import get_database, get_mqtt_service
 from src.core.config import settings
 from src.namespaces.system.schemas import HealthResponse, MessageResponse, MetricsResponse
 from src.services.cleanup_service import CleanupService
-from src.models.logs import Log
-from src.models.lampada import Lampada
+from src.models.log import Log
+from src.models.lamp import Lamp
 from src.models.mapping import Mapping
 
 router = APIRouter(tags=["System"])
@@ -175,30 +175,30 @@ async def get_system_metrics(db: AsyncSession = Depends(get_database)):
     total_mappings = total_mappings_result.scalar() or 0
     
     active_mappings_result = await db.execute(
-        select(func.count()).select_from(Mapping).where(Mapping.active == True)
+        select(func.count()).select_from(Mapping).where(Mapping.active.is_(True))
     )
     active_mappings = active_mappings_result.scalar() or 0
     
     # Get lamp states
-    total_lamps_result = await db.execute(select(func.count()).select_from(Lampada))
+    total_lamps_result = await db.execute(select(func.count()).select_from(Lamp))
     total_lamps = total_lamps_result.scalar() or 0
     
     # Count lamps by state (ON/OFF)
     on_lamps_result = await db.execute(
-        select(func.count()).select_from(Lampada).where(Lampada.estado == "ligar")
+        select(func.count()).select_from(Lamp).where(Lamp.estado == "ligar")
     )
     lamps_on = on_lamps_result.scalar() or 0
     
     off_lamps_result = await db.execute(
-        select(func.count()).select_from(Lampada).where(Lampada.estado == "desligar")
+        select(func.count()).select_from(Lamp).where(Lamp.estado == "desligar")
     )
     lamps_off = off_lamps_result.scalar() or 0
     
     # Get most active lamps (top 5 by log count in last 7 days)
     most_active_query = await db.execute(
-        select(Log.nome, func.count(Log.id).label("count"))
+        select(Log.comodo, func.count(Log.id).label("count"))
         .where(Log.data_hora >= last_7d)
-        .group_by(Log.nome)
+        .group_by(Log.comodo)
         .order_by(func.count(Log.id).desc())
         .limit(5)
     )

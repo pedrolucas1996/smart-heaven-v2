@@ -117,7 +117,14 @@ class MQTTService:
         
         if handler:
             try:
-                payload = message.payload.decode("utf-8")
+                try:
+                    payload = message.payload.decode("utf-8")
+                except UnicodeDecodeError:
+                    logger.warning(
+                        "UTF-8 decode failed for topic %s, trying latin-1 with errors='ignore'",
+                        topic
+                    )
+                    payload = message.payload.decode("latin-1", errors="ignore")
                 await handler(topic, payload)
             except Exception as e:
                 logger.error(f"Error handling message from {topic}: {e}")

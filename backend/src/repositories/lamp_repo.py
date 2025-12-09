@@ -27,6 +27,13 @@ class LampRepository(BaseRepository[Lamp]):
         )
         return result.scalar_one_or_none()
     
+    async def get_by_id(self, lamp_id: int) -> Optional[Lamp]:
+        """Get a lamp by ID."""
+        result = await self.db.execute(
+            select(Lamp).where(Lamp.id == lamp_id)
+        )
+        return result.scalar_one_or_none()
+    
     async def get_by_base(self, base_id: int) -> List[Lamp]:
         """Get all lamps for a specific base."""
         result = await self.db.execute(

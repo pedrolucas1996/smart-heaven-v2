@@ -23,6 +23,13 @@ class LightRepository(BaseRepository[Light]):
         )
         return result.scalar_one_or_none()
     
+    async def get_by_id(self, light_id: int) -> Optional[Light]:
+        """Get a light by ID."""
+        result = await self.db.execute(
+            select(Light).where(Light.id == light_id)
+        )
+        return result.scalar_one_or_none()
+    
     async def get_all_lights(self) -> List[Light]:
         """Get all lights."""
         result = await self.db.execute(select(Light))

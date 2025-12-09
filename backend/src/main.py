@@ -13,11 +13,7 @@ from src.services.scheduler_service import scheduler
 from src.services.light_service import LightService
 from src.services.switch_service import SwitchService
 from src.services.event_service import EventService
-from src.services.event_cache import EventCache
 from src.services.legacy_adapter import LegacyAdapter
-from src.repositories.mapping_repo import MappingRepository
-from src.repositories.lamp_repo import LampRepository
-from src.repositories.light_repo import LightRepository
 from src.namespaces.events.schemas import EventPayload, StatePayload
 from src.namespaces.lights import controller as lights
 from src.namespaces.lamps import controller as lamps
@@ -35,9 +31,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize event system
-event_cache = EventCache(ttl_seconds=5)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -53,16 +46,7 @@ async def lifespan(app: FastAPI):
     
     # Initialize event service
     async with database.session() as session:
-        mapping_repo = MappingRepository(session)
-        lamp_repo = LampRepository(session)
-        light_repo = LightRepository(session)
-        event_service = EventService(
-            mapping_repo=mapping_repo,
-            lamp_repo=lamp_repo,
-            light_repo=light_repo,
-            mqtt_service=mqtt_service,
-            event_cache=event_cache
-        )
+        event_service = EventService(db=session)
     
     # Connect to MQTT broker
     try:
@@ -96,16 +80,7 @@ async def lifespan(app: FastAPI):
                 
                 # Process through EventService
                 async with database.session() as session:
-                    mapping_repo = MappingRepository(session)
-                    lamp_repo = LampRepository(session)
-                    light_repo = LightRepository(session)
-                    event_svc = EventService(
-                        mapping_repo=mapping_repo,
-                        lamp_repo=lamp_repo,
-                        light_repo=light_repo,
-                        mqtt_service=mqtt_service,
-                        event_cache=event_cache
-                    )
+                    event_svc = EventService(db=session)
                     result = await event_svc.process_state_confirmation(state)
                 
                 logger.info(f"State confirmation processed: {result}")
@@ -115,17 +90,39 @@ async def lifespan(app: FastAPI):
         async def handle_button_event(topic: str, payload: str):
             """Handle button press events from devices (supports legacy formats)."""
             try:
-                # Parse event payload
+                # Log raw payload for debugging
+                logger.info(f"🔵 Button event received on topic '{topic}': {repr(payload)}")
+                
+                # Parse event payload (handle JSON and legacy/raw formats)
                 import json
-                data = json.loads(payload)
+                raw_payload = (payload or "").strip()
+                if not raw_payload:
+                    logger.warning(f"Empty payload received on topic {topic}, ignoring")
+                    return
+                
+                try:
+                    data = json.loads(raw_payload)
+                    logger.info(f"✅ Parsed JSON successfully: {data}")
+                except json.JSONDecodeError as e:
+                    logger.warning(
+                        f"⚠️ Button payload is not JSON (error: {e}), attempting legacy/raw parse: {raw_payload}"
+                    )
+                    data = LegacyAdapter.parse_raw_string_payload(raw_payload)
+                    if "raw" in data and len(data) == 1:
+                        logger.error(
+                            f"❌ Unable to parse button payload from topic {topic}: {raw_payload}"
+                        )
+                        return
+                    logger.info(f"✅ Parsed as legacy format: {data}")
                 
                 # Check if legacy format and convert
                 if LegacyAdapter.is_legacy_format(data):
-                    logger.info(f"Legacy format detected, converting: {data}")
+                    logger.info(f"🔄 Legacy format detected, converting: {data}")
                     msg_type, event = LegacyAdapter.convert_legacy_message(data, topic)
                     if msg_type != "event":
-                        logger.warning(f"Expected button event, got {msg_type}")
+                        logger.warning(f"⚠️ Expected button event, got {msg_type}")
                         return
+                    logger.info(f"✅ Converted to modern EventPayload: device={event.device}, button={event.button}, action={event.action}")
                 else:
                     # Modern format - create EventPayload schema
                     event = EventPayload(
@@ -138,24 +135,17 @@ async def lifespan(app: FastAPI):
                         origin=data.get("origin", "esp"),
                         ts=data.get("ts", datetime.utcnow())
                     )
+                    logger.info(f"✅ Modern format EventPayload: device={event.device}, button={event.button}, action={event.action}")
                 
                 # Process through EventService
+                logger.info(f"🚀 Processing button event through EventService...")
                 async with database.session() as session:
-                    mapping_repo = MappingRepository(session)
-                    lamp_repo = LampRepository(session)
-                    light_repo = LightRepository(session)
-                    event_svc = EventService(
-                        mapping_repo=mapping_repo,
-                        lamp_repo=lamp_repo,
-                        light_repo=light_repo,
-                        mqtt_service=mqtt_service,
-                        event_cache=event_cache
-                    )
+                    event_svc = EventService(db=session)
                     result = await event_svc.process_button_event(event)
                 
-                logger.info(f"Button event processed: {result}")
+                logger.info(f"✅ Button event processed successfully: {result}")
             except Exception as e:
-                logger.error(f"Error processing button event: {e}")
+                logger.error(f"❌ Error processing button event: {e}", exc_info=True)
         
         async def handle_web_command(topic: str, payload: str):
             """Handle commands from web interface."""
