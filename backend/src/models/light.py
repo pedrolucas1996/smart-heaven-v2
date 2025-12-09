@@ -1,6 +1,6 @@
 """Light model (luzes table - legacy/compatibility)."""
 from datetime import datetime
-from sqlalchemy import Boolean, Column, DateTime, Integer, String,BigInteger
+from sqlalchemy import Boolean, Column, DateTime, Integer, String,BigInteger, BIGINT
 from sqlalchemy.orm import relationship
 
 from src.infra.db import Base
@@ -11,7 +11,7 @@ class Light(Base):
     
     __tablename__ = "luzes"
     
-    id = Column( BigInteger(unsigned=True), primary_key=True, index=True, autoincrement=True)
+    id = Column( BIGINT(unsigned=True), primary_key=True, index=True, autoincrement=True)
     lampada = Column(String(50), unique=True, nullable=False, index=True)
     estado = Column(Boolean, default=False, nullable=False)
     data_de_atualizacao = Column(

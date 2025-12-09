@@ -250,15 +250,22 @@ class EventResponse(BaseModel):
         }
 
 
-class MappingResponse(BaseModel):
+class MappingBase(BaseModel):
+    """Base mapping schema."""
+    source_device: str = Field(..., description="Source device (e.g., Base_D)")
+    source_button: str = Field(..., description="Button identifier (e.g., S1, * for wildcard)")
+    source_action: Optional[str] = Field("press", description="Button action (press, release, changed, * for any)")
+    action_type: str = Field(..., description="Action to perform (e.g., toggle_light, turn_on, turn_off)")
+    target_type: str = Field(..., description="Target type (light, gate, scene, script)")
+    target_id: str = Field(..., description="Target identifier (comodo name, scene id)")
+    parameters_json: Optional[Dict[str, Any]] = Field(None, description="Additional parameters (JSON)")
+    priority: int = Field(100, description="Execution priority (lower = higher priority)")
+    description: Optional[str] = Field(None, description="Human-readable description")
+
+
+class MappingResponse(MappingBase):
     """Mapping configuration response."""
     id: int
-    source_device: str = Field(..., description="Source device (e.g., Base_D)")
-    source_button: str = Field(..., description="Button identifier (e.g., S1)")
-    action_type: str = Field(..., description="Action to perform (e.g., toggle_light)")
-    target_type: str = Field(..., description="Target type (light, gate, scene)")
-    target_id: str = Field(..., description="Target identifier")
-    parameters: Optional[Dict[str, Any]] = Field(None, description="Additional parameters")
     active: bool = Field(default=True, description="Whether mapping is active")
     created_at: datetime
     updated_at: datetime
@@ -267,14 +274,8 @@ class MappingResponse(BaseModel):
         from_attributes = True
 
 
-class MappingCreate(BaseModel):
+class MappingCreate(MappingBase):
     """Create new mapping."""
-    source_device: str = Field(..., description="Source device identifier")
-    source_button: str = Field(..., description="Button identifier")
-    action_type: str = Field(..., description="Action type")
-    target_type: str = Field(..., description="Target type")
-    target_id: str = Field(..., description="Target identifier")
-    parameters: Optional[Dict[str, Any]] = None
     active: bool = True
 
 
@@ -282,10 +283,13 @@ class MappingUpdate(BaseModel):
     """Update existing mapping."""
     source_device: Optional[str] = None
     source_button: Optional[str] = None
+    source_action: Optional[str] = None
     action_type: Optional[str] = None
     target_type: Optional[str] = None
     target_id: Optional[str] = None
-    parameters: Optional[Dict[str, Any]] = None
+    parameters_json: Optional[Dict[str, Any]] = None
+    priority: Optional[int] = None
+    description: Optional[str] = None
     active: Optional[bool] = None
 
 

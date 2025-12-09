@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.mapping import Mapping
+from src.namespaces.events.schemas import MappingCreate, MappingUpdate
 
 
 class MappingRepository:
@@ -19,6 +20,11 @@ class MappingRepository:
         await self.db.flush()
         await self.db.refresh(mapping)
         return mapping
+    
+    async def create_mapping(self, mapping: MappingCreate) -> Mapping:
+        """Create a new mapping from schema."""
+        data = mapping.model_dump()
+        return await self.create(data)
     
     async def get_by_id(self, mapping_id: int) -> Optional[Mapping]:
         """Get mapping by ID."""
@@ -36,6 +42,10 @@ class MappingRepository:
         
         result = await self.db.execute(query)
         return list(result.scalars().all())
+    
+    async def get_all_mappings(self) -> List[Mapping]:
+        """Get all mappings (wrapper for controller)."""
+        return await self.get_all(active_only=False)
     
     async def get_by_device(
         self,
@@ -100,6 +110,15 @@ class MappingRepository:
         await self.db.refresh(mapping)
         return mapping
     
+    async def update_mapping(
+        self,
+        mapping_id: int,
+        mapping: MappingUpdate
+    ) -> Optional[Mapping]:
+        """Update a mapping from schema."""
+        data = mapping.model_dump(exclude_unset=True)
+        return await self.update(mapping_id, data)
+    
     async def delete(self, mapping_id: int) -> bool:
         """Delete a mapping."""
         mapping = await self.get_by_id(mapping_id)
@@ -110,13 +129,25 @@ class MappingRepository:
         await self.db.flush()
         return True
     
+    async def delete_mapping(self, mapping_id: int) -> bool:
+        """Delete a mapping (wrapper for controller)."""
+        return await self.delete(mapping_id)
+    
     async def deactivate(self, mapping_id: int) -> Optional[Mapping]:
         """Deactivate a mapping (soft delete)."""
         return await self.update(mapping_id, {"active": False})
     
+    async def deactivate_mapping(self, mapping_id: int) -> Optional[Mapping]:
+        """Deactivate a mapping (wrapper for controller)."""
+        return await self.deactivate(mapping_id)
+    
     async def activate(self, mapping_id: int) -> Optional[Mapping]:
         """Activate a mapping."""
         return await self.update(mapping_id, {"active": True})
+    
+    async def activate_mapping(self, mapping_id: int) -> Optional[Mapping]:
+        """Activate a mapping (wrapper for controller)."""
+        return await self.activate(mapping_id)
     
     async def get_by_target(
         self,

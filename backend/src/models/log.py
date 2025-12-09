@@ -1,6 +1,6 @@
 """Event log model."""
 from datetime import datetime
-from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Index, Text,BigInteger
+from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Index, Text,BigInteger,BIGINT
 from sqlalchemy.orm import relationship
 
 from src.infra.db import Base
@@ -11,7 +11,7 @@ class Log(Base):
     
     __tablename__ = "logs"
     
-    id = Column(BigInteger(unsigned=True), primary_key=True, index=True, autoincrement=True)
+    id = Column(BIGINT(unsigned=True), primary_key=True, index=True, autoincrement=True)
     comodo = Column(String(50), ForeignKey("luzes.lampada"), nullable=False, index=True)
     estado = Column(Boolean, nullable=False)
     origem = Column(String(50), nullable=False, index=True)
