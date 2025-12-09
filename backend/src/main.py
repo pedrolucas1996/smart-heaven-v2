@@ -93,6 +93,7 @@ async def lifespan(app: FastAPI):
                 # Log raw payload for debugging
                 logger.info(f"🔵 Button event received on topic '{topic}': {repr(payload)}")
                 
+                
                 # Parse event payload (handle JSON and legacy/raw formats)
                 import json
                 raw_payload = (payload or "").strip()
