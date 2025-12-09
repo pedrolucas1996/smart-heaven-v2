@@ -27,6 +27,7 @@ from src.namespaces.system import controller as system
 from src.namespaces.events import controller as events
 from src.namespaces.websocket import controller as websocket
 
+
 # Configure logging
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
