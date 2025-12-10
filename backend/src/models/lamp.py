@@ -14,6 +14,7 @@ class Lamp(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     base_id = Column(Integer, ForeignKey("base.id", ondelete="CASCADE"), nullable=False, index=True)
     nome = Column(String(50), nullable=False, index=True)
+    apelido = Column(String(50), nullable=True)
     estado = Column(Boolean, default=False, nullable=False)
     invertido = Column(Boolean, default=False, nullable=False)
     data_de_atualizacao = Column(

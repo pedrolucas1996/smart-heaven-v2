@@ -10,6 +10,7 @@ from src.models.switch_lamp_mapping import SwitchLampMapping
 from src.models.log import Log
 from src.models.mapping import Mapping
 from src.models.button_event import ButtonEvent
+from src.models.user import User
 
 __all__ = [
     "HardwareBase",
@@ -20,4 +21,5 @@ __all__ = [
     "Log",
     "Mapping",
     "ButtonEvent",
+    "User",
 ]

@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.namespaces.events.schemas import (
     EventPayload,
     StatePayload,
-    CommandPayload
+    CommandPayload,
+    LightState
 )
 from src.repositories.mapping_repo import MappingRepository
 from src.repositories.lamp_repo import LampRepository
@@ -363,31 +364,36 @@ class EventService:
         Returns:
             Processing result
         """
-        logger.info(f"Processing state confirmation: {state.device}/{state.target} -> {state.state}")
+        lamp_name = state.comodo
+        device = state.origin
+        logger.info(f"Processing state confirmation: {device}/{lamp_name} -> {state.state}")
         
         try:
             # Update database state
-            new_state = state.state.lower() == "on"
+            new_state = state.state == LightState.ON or (isinstance(state.state, str) and state.state.lower() == "on")
             
             # Try lampada table first
-            lamp = await self.lamp_repo.get_by_name(state.target)
+            lamp = await self.lamp_repo.get_by_name(lamp_name)
             if lamp:
-                await self.lamp_repo.update_state(state.target, new_state)
+                await self.lamp_repo.update_state(lamp_name, new_state)
+                logger.info(f"✅ Updated lamp state: {lamp_name} = {new_state}")
             else:
                 # Fallback to luzes table
-                light = await self.light_repo.get_by_name(state.target)
+                light = await self.light_repo.get_by_name(lamp_name)
                 if light:
-                    await self.light_repo.update_state(state.target, new_state)
+                    await self.light_repo.update_state(lamp_name, new_state)
+                    logger.info(f"✅ Updated light state: {lamp_name} = {new_state}")
                 else:
                     # Create if doesn't exist
-                    await self.light_repo.create_if_not_exists(state.target, new_state)
+                    await self.light_repo.create_if_not_exists(lamp_name, new_state)
+                    logger.info(f"✅ Created new light: {lamp_name} = {new_state}")
             
             await self.db.commit()
             
             return {
                 "status": "success",
-                "target": state.target,
-                "state": state.state
+                "target": lamp_name,
+                "state": str(state.state)
             }
         except Exception as e:
             logger.error(f"Error processing state confirmation: {e}", exc_info=True)

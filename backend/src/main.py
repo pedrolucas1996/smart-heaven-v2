@@ -14,7 +14,7 @@ from src.services.light_service import LightService
 from src.services.switch_service import SwitchService
 from src.services.event_service import EventService
 from src.services.legacy_adapter import LegacyAdapter
-from src.namespaces.events.schemas import EventPayload, StatePayload
+from src.namespaces.events.schemas import EventPayload, StatePayload, LightState, Origin
 from src.namespaces.lights import controller as lights
 from src.namespaces.lamps import controller as lamps
 from src.namespaces.switches import controller as switches
@@ -22,6 +22,7 @@ from src.namespaces.logs import controller as logs
 from src.namespaces.system import controller as system
 from src.namespaces.events import controller as events
 from src.namespaces.websocket import controller as websocket
+from src.namespaces.auth import controller as auth
 
 
 # Configure logging
@@ -92,7 +93,7 @@ async def lifespan(app: FastAPI):
             try:
                 # Log raw payload for debugging
                 logger.info(f"🔵 Button event received on topic '{topic}': {repr(payload)}")
-                
+
                 
                 # Parse event payload (handle JSON and legacy/raw formats)
                 import json
@@ -153,6 +154,37 @@ async def lifespan(app: FastAPI):
             logger.info(f"Web command received: {payload}")
             # Web commands bypass automation - handled by LampController
         
+        async def handle_legacy_server_command(topic: str, payload: str):
+            """Handle legacy server commands that also report state."""
+            try:
+                import json
+                data = json.loads(payload)
+                
+                # Legacy format: {"comodo": "L_Entrada", "acao": "ligar"}
+                # Treat this as a state confirmation
+                comodo = data.get("comodo", "unknown")
+                acao = data.get("acao", "").lower()
+                state_value = "on" if acao == "ligar" else "off"
+                
+                logger.info(f"📡 Legacy state from servidor: {comodo} = {state_value}")
+                
+                # Convert to StatePayload
+                state = StatePayload(
+                    v="1.0",
+                    comodo=comodo,
+                    state=LightState.ON if state_value == "on" else LightState.OFF,
+                    origin=Origin.MQTT,
+                    ts=datetime.utcnow()
+                )
+                
+                # Update database
+                async with database.session() as session:
+                    event_svc = EventService(db=session)
+                    result = await event_svc.process_state_confirmation(state)
+                    logger.info(f"✅ Legacy state processed: {result}")
+            except Exception as e:
+                logger.error(f"Error processing legacy server command: {e}")
+        
         await mqtt_service.subscribe(
             f"{settings.MQTT_TOPIC_STATE}/#",
             handle_state_update
@@ -164,6 +196,10 @@ async def lifespan(app: FastAPI):
         await mqtt_service.subscribe(
             settings.MQTT_TOPIC_WEB_COMMAND,
             handle_web_command
+        )
+        await mqtt_service.subscribe(
+            "casa/servidor/comando_lampada",
+            handle_legacy_server_command
         )
         
         logger.info("MQTT subscriptions configured with EventService")
@@ -223,6 +259,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth.router, prefix="/api/v1")
 app.include_router(system.router, prefix="/api/v1")
 app.include_router(lights.router, prefix="/api/v1")
 app.include_router(lamps.router, prefix="/api/v1")

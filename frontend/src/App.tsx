@@ -146,7 +146,7 @@ function App() {
                         )}
                         <span className="text-sm font-medium">{light.lampada}</span>
                         <span className="text-xs">
-                          {light.estado ? 'Ligada' : 'Desligada'}
+                          {light.estado ? ' on' : ' off'}
                         </span>
                       </div>
                     </button>

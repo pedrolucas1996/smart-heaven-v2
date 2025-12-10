@@ -7,11 +7,13 @@ from typing import Optional
 class LampBase(BaseModel):
     """Base schema for lamp data."""
     nome: str = Field(..., description="Lamp name/identifier")
+    apelido: Optional[str] = Field(None, description="Friendly nickname for display")
 
 
 class LampCreate(LampBase):
     """Schema for creating a new lamp."""
     base_id: int = Field(..., description="Base ID this lamp belongs to")
+    apelido: Optional[str] = Field(None, description="Friendly nickname for display")
     estado: bool = Field(default=False, description="Initial state (on/off)")
     invertido: bool = Field(default=False, description="Hardware inverted signal")
 
@@ -19,6 +21,7 @@ class LampCreate(LampBase):
 class LampUpdate(BaseModel):
     """Schema for updating a lamp."""
     nome: Optional[str] = Field(None, description="Lamp name")
+    apelido: Optional[str] = Field(None, description="Friendly nickname for display")
     base_id: Optional[int] = Field(None, description="Base ID")
     estado: Optional[bool] = Field(None, description="State (on/off)")
     invertido: Optional[bool] = Field(None, description="Hardware inverted signal")
@@ -28,6 +31,7 @@ class LampResponse(LampBase):
     """Schema for lamp response."""
     id: int = Field(..., description="Lamp ID")
     base_id: int = Field(..., description="Base ID")
+    apelido: Optional[str] = Field(None, description="Friendly nickname for display")
     estado: bool = Field(..., description="Current state (on/off)")
     invertido: bool = Field(..., description="Hardware inverted signal")
     data_de_atualizacao: datetime = Field(..., description="Last update timestamp")

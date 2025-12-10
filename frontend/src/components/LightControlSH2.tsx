@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Lightbulb, Power, Sun, Maximize2, Zap, Loader2 } from 'lucide-react';
+import { Lightbulb, Sun, Maximize2, Zap, Loader2 } from 'lucide-react';
 import { lightsApi } from '../lib/api';
 
 interface Light {
   id: number;
   nome: string;
+  apelido?: string | null;
   base_id: number;
   estado: boolean;
   invertido: boolean;
@@ -103,7 +104,7 @@ export function LightControlSH2({ compact = false }: LightControlProps) {
               >
                 <div className="flex flex-col items-center gap-2">
                   <Lightbulb className="w-6 h-6" />
-                  <span className="text-xs font-medium truncate w-full text-center">{light.nome}</span>
+                  <span className="text-xs font-medium truncate w-full text-center">{light.apelido || light.nome}</span>
                 </div>
               </button>
             );
@@ -120,68 +121,59 @@ export function LightControlSH2({ compact = false }: LightControlProps) {
   }
 
   return (
-    <div className="backdrop-blur-xl bg-gradient-to-br from-amber-900/40 to-slate-900/60 rounded-3xl border border-amber-500/20 p-8 shadow-2xl">
-      <div className="flex items-start justify-between mb-8">
+    <div className="backdrop-blur-xl bg-gradient-to-br from-amber-900/40 to-slate-900/60 rounded-3xl border border-amber-500/20 p-4 md:p-8 shadow-2xl">
+      <div className="flex flex-col sm:flex-row items-start justify-between mb-6 gap-3">
         <div>
-          <h2 className="text-2xl text-white mb-2">💡 Controle de Iluminação</h2>
-          <p className="text-slate-400">{onLights} de {lights.length} luzes ligadas</p>
+          <h2 className="text-xl md:text-2xl text-white mb-2">💡 Controle de Iluminação</h2>
+          <p className="text-slate-400 text-sm">{onLights} de {lights.length} luzes ligadas</p>
         </div>
-        {loading && <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />}
+        {loading && <Loader2 className="w-5 h-5 md:w-6 md:h-6 text-amber-400 animate-spin" />}
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300">
+        <div className="mb-6 p-4 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-sm">
           {error}
         </div>
       )}
 
-      {/* Grid de luzes */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {/* Grid de luzes - responsivo */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
         {lights.map((light) => {
           const isOn = getDisplayState(light);
           return (
-            <div
+            <button
               key={light.id}
-              className={`p-6 rounded-2xl transition-all ${
+              onClick={() => toggleLight(light.nome)}
+              disabled={loading}
+              className={`p-2 sm:p-3 md:p-5 rounded-lg sm:rounded-xl transition-all touch-manipulation hover:scale-105 active:scale-95 ${
                 isOn
-                  ? 'bg-gradient-to-br from-amber-500 to-yellow-400 shadow-lg shadow-amber-500/40'
-                  : 'bg-white/5 border border-white/10'
-              }`}
+                  ? 'bg-gradient-to-br from-amber-500 to-yellow-400 shadow-lg shadow-amber-500/40 hover:from-amber-400 hover:to-yellow-300'
+                  : 'bg-white/5 border border-white/10 hover:bg-white/10'
+              } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
-              <div className="flex flex-col items-center gap-4">
-                <div className={`p-4 rounded-full ${
+              <div className="flex flex-col items-center gap-1 sm:gap-2 md:gap-3">
+                <div className={`p-1.5 sm:p-2 md:p-3 rounded-full ${
                   isOn ? 'bg-white/20' : 'bg-white/5'
                 }`}>
-                  <Lightbulb className={`w-8 h-8 ${
+                  <Lightbulb className={`w-4 h-4 sm:w-5 sm:h-5 md:w-7 md:h-7 ${
                     isOn ? 'text-slate-900' : 'text-slate-500'
                   }`} />
                 </div>
 
-                <div className="text-center">
-                  <p className={`font-medium mb-1 ${
+                <div className="w-full min-h-[2rem] sm:min-h-[2.5rem] flex items-center justify-center gap-1 px-1">
+                  <p className={`font-medium text-[10px] sm:text-xs md:text-sm truncate leading-tight ${
                     isOn ? 'text-slate-900' : 'text-white'
-                  }`}>
-                    {light.nome}
+                  }`} title={light.apelido || light.nome}>
+                    {light.apelido || light.nome}
                   </p>
-                  <p className={`text-xs ${
+                  <span className={`text-[8px] sm:text-[9px] md:text-[10px] font-normal whitespace-nowrap ${
                     isOn ? 'text-slate-700' : 'text-slate-400'
                   }`}>
-                    {isOn ? 'Ligada' : 'Desligada'}
-                  </p>
+                    {isOn ? 'on' : 'off'}
+                  </span>
                 </div>
-
-                <button
-                  onClick={() => toggleLight(light.nome)}
-                  className={`w-full px-4 py-2 rounded-xl text-sm transition-all ${
-                    isOn
-                      ? 'bg-slate-900 text-white hover:bg-slate-800'
-                      : 'bg-amber-500 text-slate-900 hover:bg-amber-400 shadow-lg shadow-amber-500/30'
-                  }`}
-                >
-                  <Power className="w-4 h-4 mx-auto" />
-                </button>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
