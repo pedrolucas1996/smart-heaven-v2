@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, ConfigDict
 class LightBase(BaseModel):
     """Base light schema."""
     lampada: str = Field(..., min_length=1, max_length=50, description="Light name/identifier")
+    comodo: Optional[str] = Field(None, max_length=50, description="Cômodo da lâmpada")
 
 
 class LightCreate(LightBase):
@@ -21,6 +22,7 @@ class LightCreate(LightBase):
 class LightUpdate(BaseModel):
     """Schema for updating a light."""
     estado: Optional[bool] = Field(None, description="New state")
+    comodo: Optional[str] = Field(None, max_length=50, description="Cômodo da lâmpada")
 
 
 class LightResponse(LightBase):

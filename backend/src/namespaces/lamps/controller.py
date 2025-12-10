@@ -90,7 +90,8 @@ async def create_lamp(
     new_lamp = await service.create_lamp(
         nome=lamp.nome,
         base_id=lamp.base_id,
-        estado=lamp.estado
+        estado=lamp.estado,
+        comodo=lamp.comodo
     )
     return new_lamp
 

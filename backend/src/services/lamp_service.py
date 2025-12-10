@@ -168,12 +168,13 @@ class LampService:
         except Exception as e:
             logger.error(f"Error handling web command: {e}")
     
-    async def create_lamp(self, nome: str, base_id: int, estado: bool = False) -> dict:
+    async def create_lamp(self, nome: str, base_id: int, estado: bool = False, comodo: str = None) -> dict:
         """Create a new lamp."""
         lamp = await self.lamp_repo.create({
             "nome": nome,
             "base_id": base_id,
-            "estado": estado
+            "estado": estado,
+            "comodo": comodo
         })
         await self.db.commit()
         return lamp

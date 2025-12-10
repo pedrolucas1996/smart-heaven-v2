@@ -17,12 +17,14 @@ class Lamp(Base):
     apelido = Column(String(50), nullable=True)
     estado = Column(Boolean, default=False, nullable=False)
     invertido = Column(Boolean, default=False, nullable=False)
+    comodo = Column(String(50), nullable=True)
     data_de_atualizacao = Column(
         DateTime, 
         default=datetime.utcnow, 
         onupdate=datetime.utcnow,
         nullable=False
     )
+    
     
     # Relationships
     base = relationship("HardwareBase", back_populates="lamps")
