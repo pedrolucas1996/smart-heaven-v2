@@ -11,31 +11,56 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setIsLoading(true);
 
     try {
       if (isRegister) {
-        await register(username, email, password);
-        // Mostrar mensagem de sucesso e mudar para tela de login
+        console.log('Registering user:', { username, email });
+        const result = await register(username, email, password);
+        console.log('Registration successful:', result);
         setError('');
+        setSuccess('Conta criada com sucesso! Aguarde aprovação de um administrador para fazer login.');
         setIsRegister(false);
         setUsername('');
         setEmail('');
         setPassword('');
-        alert('Conta criada com sucesso! Aguarde aprovação de um administrador para fazer login.');
+        setTimeout(() => {
+          setSuccess('');
+        }, 4000);
       } else {
+        console.log('Logging in:', username);
         await login(username, password);
-        // Redirecionar após sucesso
         navigate('/');
       }
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Erro ao autenticar. Tente novamente.');
+      console.error('Submit error:', err);
+      let errorMessage = 'Erro ao autenticar. Tente novamente.';
+      
+      if (err.response?.data?.detail) {
+        const detail = err.response.data.detail;
+        // Se for um array de erros de validação do Pydantic
+        if (Array.isArray(detail)) {
+          errorMessage = detail.map((e: any) => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
+        } else if (typeof detail === 'string') {
+          errorMessage = detail;
+        } else {
+          errorMessage = JSON.stringify(detail);
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      console.error('Error message:', errorMessage);
+      setError(errorMessage);
     } finally {
+      console.log('Setting isLoading to false');
       setIsLoading(false);
     }
   };
@@ -104,6 +129,11 @@ export function LoginPage() {
           {error && (
             <div className="bg-red-900/50 border border-red-600 text-red-200 px-4 py-3 rounded-lg text-sm">
               {error}
+            </div>
+          )}
+          {success && (
+            <div className="bg-green-900/50 border border-green-600 text-green-200 px-4 py-3 rounded-lg text-sm">
+              {success}
             </div>
           )}
 

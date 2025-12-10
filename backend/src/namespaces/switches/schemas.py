@@ -23,7 +23,9 @@ class SwitchUpdate(BaseModel):
 
 class SwitchResponse(SwitchBase):
     """Schema for switch response."""
+    id: int = Field(..., description="Switch ID")
     base_id: int = Field(..., description="Hardware base ID")
+    id_house: int = Field(..., description="House ID")
     estado: bool = Field(..., description="Current physical button state")
     ativo: bool = Field(..., description="Whether switch is enabled")
     data_de_atualizacao: Optional[datetime] = Field(None, description="Last update timestamp")

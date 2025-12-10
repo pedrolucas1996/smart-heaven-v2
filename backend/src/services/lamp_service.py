@@ -26,9 +26,9 @@ class LampService:
         self.lamp_repo = LampRepository(db)
         self.log_repo = LogRepository(db)
     
-    async def get_all_lamps(self) -> List:
-        """Get all lamps."""
-        return await self.lamp_repo.get_all_lamps()
+    async def get_lamps_by_house(self, id_house: int) -> List:
+        """Get all lamps for a specific house."""
+        return await self.lamp_repo.get_by_house(id_house)
     
     async def get_lamp_by_name(self, nome: str) -> Optional:
         """Get a specific lamp by name."""
@@ -72,7 +72,7 @@ class LampService:
         lamp = await self.lamp_repo.update_state(nome, estado)
         
         # Create log
-        await self.log_repo.create_log(nome, estado, origem)
+        await self.log_repo.create_log(nome, estado, origem, lamp.id_house)
         
         # Prepare MQTT command
         acao = "ligar" if estado else "desligar"
@@ -130,7 +130,7 @@ class LampService:
             # Update database
             lamp = await self.lamp_repo.update_state(nome, estado)
             if lamp:
-                await self.log_repo.create_log(nome, estado, "esp_mqtt")
+                await self.log_repo.create_log(nome, estado, "esp_mqtt", lamp.id_house)
                 await self.db.commit()
                 logger.info(f"State updated from MQTT: {nome} = {estado}")
             else:

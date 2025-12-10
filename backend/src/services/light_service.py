@@ -30,6 +30,10 @@ class LightService:
         """Get all lights."""
         return await self.light_repo.get_all_lights()
     
+    async def get_lights_by_house(self, id_house: int) -> List:
+        """Get all lights for a specific house."""
+        return await self.light_repo.get_by_house(id_house)
+    
     async def get_light_by_name(self, lampada: str) -> Optional:
         """Get a specific light by name."""
         return await self.light_repo.get_by_name(lampada)
@@ -68,7 +72,7 @@ class LightService:
             light = await self.light_repo.update_state(comodo, estado)
         
         # Create log
-        await self.log_repo.create_log(comodo, estado, origem)
+        await self.log_repo.create_log(comodo, estado, origem, light.id_house)
         
         # Prepare MQTT command
         acao = "ligar" if estado else "desligar"
@@ -121,8 +125,8 @@ class LightService:
             estado = estado_str == "on"
             
             # Update database
-            await self.light_repo.update_state(comodo, estado)
-            await self.log_repo.create_log(comodo, estado, "esp_mqtt")
+            light = await self.light_repo.update_state(comodo, estado)
+            await self.log_repo.create_log(comodo, estado, "esp_mqtt", light.id_house)
             await self.db.commit()
             
             logger.info(f"State updated from MQTT: {comodo} = {estado}")

@@ -35,6 +35,13 @@ class LightRepository(BaseRepository[Light]):
         result = await self.db.execute(select(Light))
         return list(result.scalars().all())
     
+    async def get_by_house(self, id_house: int) -> List[Light]:
+        """Get all lights for a specific house."""
+        result = await self.db.execute(
+            select(Light).where(Light.id_house == id_house)
+        )
+        return list(result.scalars().all())
+    
     async def update_state(self, lampada: str, estado: bool) -> Optional[Light]:
         """Update light state by name."""
         await self.db.execute(

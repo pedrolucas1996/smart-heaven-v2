@@ -12,6 +12,8 @@ class HardwareBase(Base):
     __tablename__ = "base"
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+        
+    id_house = Column(Integer, nullable=False)
     nome = Column(String(50), unique=True, nullable=False, index=True)
     
     # Relationships

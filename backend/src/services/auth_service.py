@@ -130,7 +130,8 @@ class AuthService:
             email=user_data.email,
             password_hash=hashed_password,
             is_active=False,  # Requer aprovação manual de um admin
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            id_house=user_data.id_house
         )
         
         self.db.add(user)

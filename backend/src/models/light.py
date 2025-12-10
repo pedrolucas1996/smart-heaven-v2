@@ -13,6 +13,8 @@ class Light(Base):
     __tablename__ = "luzes"
     
     id = Column(BIGINT(unsigned=True), primary_key=True, index=True, autoincrement=True)
+        
+    id_house = Column(Integer, nullable=False)
     lampada = Column(String(50), unique=True, nullable=False, index=True)
     estado = Column(Boolean, default=False, nullable=False)
     data_de_atualizacao = Column(

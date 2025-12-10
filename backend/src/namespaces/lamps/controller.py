@@ -1,4 +1,5 @@
 """Lamp management controller (lampada table)."""
+import logging
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,19 +13,26 @@ from src.namespaces.lamps.schemas import (
 )
 from src.namespaces.system.schemas import MessageResponse
 from src.services.lamp_service import LampService
+from src.core.dependencies import get_current_active_user
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/lamps", tags=["Lamps"])
 
 
 @router.get("", response_model=List[LampResponse])
-async def get_all_lamps(db: AsyncSession = Depends(get_database)):
+
+
+async def get_all_lamps(
+    db: AsyncSession = Depends(get_database),
+    user = Depends(get_current_active_user)
+):
     """
     Get all lamps in the system.
     
     Returns a list of all registered lamps with their current states.
     """
     service = LampService(db)
-    lamps = await service.get_all_lamps()
+    lamps = await service.get_lamps_by_house(user.id_house)
     return lamps
 
 
@@ -212,4 +220,10 @@ async def toggle_lamp(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Error toggling lamp {nome}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error toggling lamp: {str(e)}"
         )

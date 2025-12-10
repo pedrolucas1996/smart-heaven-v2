@@ -13,10 +13,13 @@ class LampRepository(BaseRepository[Lamp]):
     def __init__(self, db: AsyncSession):
         super().__init__(Lamp, db)
     
-    async def get_all_lamps(self) -> List[Lamp]:
-        """Get all lamps."""
+
+    async def get_by_house(self, id_house: int) -> List[Lamp]:
+        """Get all lamps for a specific house."""
         result = await self.db.execute(
-            select(Lamp).order_by(Lamp.nome)
+            select(Lamp)
+            .where(Lamp.id_house == id_house)
+            .order_by(Lamp.nome)
         )
         return list(result.scalars().all())
     

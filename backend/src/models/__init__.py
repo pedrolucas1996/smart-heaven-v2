@@ -11,6 +11,7 @@ from src.models.log import Log
 from src.models.mapping import Mapping
 from src.models.button_event import ButtonEvent
 from src.models.user import User
+from src.models.casa import Casa
 
 __all__ = [
     "HardwareBase",
@@ -22,4 +23,5 @@ __all__ = [
     "Mapping",
     "ButtonEvent",
     "User",
+    "Casa",
 ]

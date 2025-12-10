@@ -13,6 +13,8 @@ class Log(Base):
     __tablename__ = "logs"
     
     id = Column(BIGINT(unsigned=True), primary_key=True, index=True, autoincrement=True)
+        
+    id_house = Column(Integer, nullable=False)
     comodo = Column(String(50), ForeignKey("luzes.lampada"), nullable=False, index=True)
     estado = Column(Boolean, nullable=False)
     origem = Column(String(50), nullable=False, index=True)

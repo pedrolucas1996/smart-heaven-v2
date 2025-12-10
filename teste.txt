@@ -1,0 +1,4 @@
+python -m uvicorn src.main:app --reload
+
+cd H:\vscode\smart-heaven-v2\frontend
+npm run dev

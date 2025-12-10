@@ -31,6 +31,7 @@ class LampResponse(LampBase):
     """Schema for lamp response."""
     id: int = Field(..., description="Lamp ID")
     base_id: int = Field(..., description="Base ID")
+    id_house: int = Field(..., description="House ID")
     apelido: Optional[str] = Field(None, description="Friendly nickname for display")
     estado: bool = Field(..., description="Current state (on/off)")
     invertido: bool = Field(..., description="Hardware inverted signal")

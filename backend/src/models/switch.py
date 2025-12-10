@@ -12,6 +12,7 @@ class Switch(Base):
     __tablename__ = "interruptor"
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id_house = Column(Integer, nullable=False)
     base_id = Column(Integer, ForeignKey("base.id", ondelete="CASCADE"), nullable=False, index=True)
     nome = Column(String(50), nullable=False, index=True)
     estado = Column(Boolean, default=False, nullable=False, comment="Physical button state")

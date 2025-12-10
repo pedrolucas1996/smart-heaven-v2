@@ -22,6 +22,8 @@ from src.namespaces.logs import controller as logs
 from src.namespaces.system import controller as system
 from src.namespaces.events import controller as events
 from src.namespaces.websocket import controller as websocket
+
+from src.namespaces.casas import controller as casas
 from src.namespaces.auth import controller as auth
 
 
@@ -260,6 +262,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(casas.router, prefix="/api/v1")
 app.include_router(system.router, prefix="/api/v1")
 app.include_router(lights.router, prefix="/api/v1")
 app.include_router(lamps.router, prefix="/api/v1")

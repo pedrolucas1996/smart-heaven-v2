@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
     
+    # CallMeBot WhatsApp Notifications
+    CALLMEBOT_PHONE: str = ""
+    CALLMEBOT_APIKEY: str = ""
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

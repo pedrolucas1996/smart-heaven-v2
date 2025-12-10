@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchCurrentUser = async (authToken: string) => {
     try {
-      const response = await axios.get('http://localhost:8000/api/v1/auth/me', {
+      const response = await axios.get('/api/v1/auth/me', {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setUser(response.data);
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     formData.append('password', password);
 
     const response = await axios.post(
-      'http://localhost:8000/api/v1/auth/login',
+      '/api/v1/auth/login',
       formData,
       {
         headers: {
@@ -82,14 +82,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (username: string, email: string, password: string) => {
-    const response = await axios.post('http://localhost:8000/api/v1/auth/register', {
-      username,
-      email,
-      password,
-    });
+    try {
+      const response = await axios.post('/api/v1/auth/register', {
+        username,
+        email,
+        password,
+      });
 
-    // Não faz auto-login porque usuário precisa ser aprovado primeiro
-    return response.data;
+      // Não faz auto-login porque usuário precisa ser aprovado primeiro
+      return response.data;
+    } catch (error: any) {
+      console.error('Register error:', error);
+      throw error;
+    }
   };
 
   const logout = () => {

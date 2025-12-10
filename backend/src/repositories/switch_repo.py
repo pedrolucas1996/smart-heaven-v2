@@ -38,6 +38,13 @@ class SwitchRepository(BaseRepository[Switch]):
         )
         return list(result.scalars().all())
     
+    async def get_by_house(self, id_house: int) -> List[Switch]:
+        """Get all switches for a specific house."""
+        result = await self.db.execute(
+            select(Switch).where(Switch.id_house == id_house)
+        )
+        return list(result.scalars().all())
+    
     async def get_by_base(self, base: str) -> List[Switch]:
         """Get all switches for a specific base."""
         result = await self.db.execute(

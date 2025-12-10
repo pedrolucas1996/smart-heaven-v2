@@ -1,4 +1,4 @@
-"""Light management controller."""
+"""Light management controller (luzes table)."""
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,19 +12,30 @@ from src.namespaces.lights.schemas import (
 )
 from src.namespaces.system.schemas import MessageResponse
 from src.services.light_service import LightService
+from src.core.dependencies import get_current_active_user
+from src.models.user import User
 
 router = APIRouter(prefix="/lights", tags=["Lights"])
 
 
 @router.get("", response_model=List[LightResponse])
-async def get_all_lights(db: AsyncSession = Depends(get_database)):
+async def get_all_lights(
+    db: AsyncSession = Depends(get_database),
+    current_user: User = Depends(get_current_active_user)
+):
     """
-    Get all lights in the system.
+    Get all lights for the current user's house.
     
     Returns a list of all registered lights with their current states.
     """
+    if not current_user.id_house:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is not associated with a house"
+        )
+    
     service = LightService(db)
-    lights = await service.get_all_lights()
+    lights = await service.get_lights_by_house(current_user.id_house)
     return lights
 
 

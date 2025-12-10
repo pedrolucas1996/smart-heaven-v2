@@ -25,7 +25,8 @@ class Mapping(Base):
     __tablename__ = "mappings"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    
+        
+    id_house = Column(Integer, nullable=False)
     # Source event identification
     source_device = Column(
         String(50),

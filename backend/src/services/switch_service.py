@@ -70,6 +70,10 @@ class SwitchService:
         """Get all switches."""
         return await self.switch_repo.get_all_switches()
     
+    async def get_switches_by_house(self, id_house: int) -> List:
+        """Get all switches for a specific house."""
+        return await self.switch_repo.get_by_house(id_house)
+    
     async def get_switch_by_name(self, nome: str) -> Optional:
         """Get a specific switch by name."""
         return await self.switch_repo.get_by_name(nome)

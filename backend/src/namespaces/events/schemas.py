@@ -266,6 +266,7 @@ class MappingBase(BaseModel):
 class MappingResponse(MappingBase):
     """Mapping configuration response."""
     id: int
+    id_house: int = Field(..., description="House ID")
     active: bool = Field(default=True, description="Whether mapping is active")
     created_at: datetime
     updated_at: datetime

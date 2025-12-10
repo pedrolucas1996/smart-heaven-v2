@@ -21,6 +21,8 @@ class LightUpdate(BaseModel):
 
 class LightResponse(LightBase):
     """Schema for light response."""
+    id: int = Field(..., description="Light ID")
+    id_house: int = Field(..., description="House ID")
     estado: bool = Field(..., description="Current state (on/off)")
     data_de_atualizacao: datetime = Field(..., description="Last update timestamp")
     

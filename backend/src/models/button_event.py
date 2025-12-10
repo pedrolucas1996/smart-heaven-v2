@@ -16,6 +16,8 @@ class ButtonEvent(Base):
     __tablename__ = "button_events"
     
     id = Column(BIGINT(unsigned=True), primary_key=True, index=True, autoincrement=True)
+        
+    id_house = Column(Integer, nullable=False)
     
     # Event identification
     device = Column(String(50), nullable=False, index=True, comment="Device identifier (e.g., Base_D, Base_A)")

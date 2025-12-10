@@ -1,6 +1,7 @@
 """User schemas for authentication."""
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
+from typing import Optional
 
 
 class UserBase(BaseModel):
@@ -12,6 +13,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """Schema for creating a user."""
     password: str = Field(..., min_length=6, max_length=100)
+    id_house: Optional[int] = Field(None, description="ID da casa vinculada ao usuário")
 
 
 class UserLogin(BaseModel):
@@ -23,6 +25,7 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     """Schema for user response."""
     id: int
+    id_house: Optional[int] = None
     is_active: bool
     created_at: datetime
     

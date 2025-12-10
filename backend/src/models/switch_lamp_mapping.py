@@ -11,6 +11,7 @@ class SwitchLampMapping(Base):
     __tablename__ = "interruptor_lampada"
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id_house = Column(Integer, nullable=False)
     interruptor_id = Column(Integer, ForeignKey("interruptor.id", ondelete="CASCADE"), nullable=False)
     lampada_id = Column(Integer, ForeignKey("lampada.id", ondelete="CASCADE"), nullable=False)
     ordem = Column(Integer, nullable=True, comment="Order for sequential activation")

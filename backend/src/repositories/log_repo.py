@@ -18,13 +18,15 @@ class LogRepository(BaseRepository[Log]):
         self,
         comodo: str,
         estado: bool,
-        origem: str
+        origem: str,
+        id_house: int
     ) -> Log:
         """Create a new log entry."""
         return await self.create({
             "comodo": comodo,
             "estado": estado,
-            "origem": origem
+            "origem": origem,
+            "id_house": id_house
         })
     
     async def get_logs_by_light(
