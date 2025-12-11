@@ -66,9 +66,7 @@ cat > backend/.env << EOF
 DATABASE_URL=mysql+aiomysql://${MYSQL_USER}:${MYSQL_PASS}@${MYSQL_HOST}:3306/${MYSQL_DB}
 
 # MQTT Configuration
-MQTT_HOST=${MQTT_HOST}
-MQTT_PORT=1883
-MQTT_KEEPALIVE=60
+
 
 # Application Settings
 APP_NAME=Smart Heaven v2
@@ -82,7 +80,7 @@ ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 # CORS
-CORS_ORIGINS=http://localhost:5173,http://192.168.31.153:5173,http://smart-heaven.com,https://smart-heaven.com
+CORS_ORIGINS=["http://localhost:5173","http://192.168.31.153:5173","http://smart-heaven.com","https://smart-heaven.com"]
 
 # CallMeBot (WhatsApp Notifications)
 CALLMEBOT_PHONE=+5515996895395

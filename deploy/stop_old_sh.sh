@@ -6,8 +6,8 @@ echo "Parando Smart Heaven v1 (Antigo)"
 echo "========================================"
 
 # Para o processo servidor.py se estiver rodando
-echo "1. Parando servidor.py..."
-pkill -f "python.*servidor.py" || echo "   Nenhum processo servidor.py encontrado"
+echo "1. Parando servidor.py via systemd (sem kill)..."
+echo "   Não será usado 'kill' ou 'pkill'. Apenas parada via systemd."
 
 # Para o serviço systemd se existir
 echo "2. Parando serviço systemd (se existir)..."
@@ -25,7 +25,7 @@ fi
 echo "3. Verificando processos restantes..."
 if pgrep -f "servidor.py" > /dev/null; then
     echo "   AVISO: Ainda há processos servidor.py rodando!"
-    echo "   Use: sudo pkill -9 -f servidor.py para forçar a parada"
+    echo "   Se necessário, pare manualmente ou revise o serviço systemd."
 else
     echo "   ✓ Nenhum processo do Smart Heaven v1 rodando"
 fi
