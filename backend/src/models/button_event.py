@@ -17,7 +17,7 @@ class ButtonEvent(Base):
     
     id = Column(BIGINT(unsigned=True), primary_key=True, index=True, autoincrement=True)
         
-    id_house = Column(Integer, nullable=False)
+    id_house = Column(Integer, nullable=True, default=1)
     
     # Event identification
     device = Column(String(50), nullable=False, index=True, comment="Device identifier (e.g., Base_D, Base_A)")
