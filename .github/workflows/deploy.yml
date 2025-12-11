@@ -25,9 +25,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ -x /home/pedro/scripts/deploy-smart-heaven.sh ]; then
-            /home/pedro/scripts/deploy-smart-heaven.sh
-          else
-            echo "ERROR: /home/pedro/scripts/deploy-smart-heaven.sh not found or not executable" >&2
-            exit 1
-          fi
+          cd /home/pedro/smart-heaven-v2
+          
+          # Update code
+          git fetch origin
+          git reset --hard origin/master
+          
+          # Run deploy script
+          chmod +x deploy/deploy-smart-heaven.sh
+          ./deploy/deploy-smart-heaven.sh
