@@ -1,13 +1,13 @@
 """User schemas for authentication."""
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import Optional
 
 
 class UserBase(BaseModel):
     """Base user schema."""
     username: str = Field(..., min_length=3, max_length=50)
-    email: EmailStr
+    email: str
 
 
 class UserCreate(UserBase):
