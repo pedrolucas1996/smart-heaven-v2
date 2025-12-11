@@ -18,7 +18,6 @@ from src.namespaces.events.schemas import EventPayload, StatePayload, LightState
 from src.namespaces.lights import controller as lights
 from src.namespaces.lamps import controller as lamps
 from src.namespaces.switches import controller as switches
-from src.namespaces.logs import controller as logs
 from src.namespaces.system import controller as system
 from src.namespaces.events import controller as events
 from src.namespaces.websocket import controller as websocket
@@ -267,7 +266,6 @@ app.include_router(system.router, prefix="/api/v1")
 app.include_router(lights.router, prefix="/api/v1")
 app.include_router(lamps.router, prefix="/api/v1")
 app.include_router(switches.router, prefix="/api/v1")
-app.include_router(logs.router, prefix="/api/v1")
 app.include_router(events.router)  # Already includes /api/v1/events prefix
 app.include_router(websocket.router, prefix="/api/v1")
 
