@@ -12,7 +12,8 @@ services:
       - DATABASE_URL=mysql+aiomysql://pedro:395967@192.168.31.153:3306/smartheaven
       - MQTT_HOST=192.168.31.153
       - MQTT_PORT=1883
-    volumes:
-      - ./backend:/app
+    # REMOVIDO: volumes montados em produção (código já está na imagem)
+    # volumes:
+    #   - ./backend:/app
     network_mode: host
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000

@@ -39,11 +39,11 @@ async def register(
     """Register a new user. Account will be inactive until approved by an admin."""
     logger.info(f"Register request received: {user_data.model_dump()}")
     auth_service = AuthService(db)
-    
+
     try:
         user = await auth_service.create_user(user_data)
         logger.info(f"New user registered (pending approval): {user.username}")
-        
+
         # Send WhatsApp notification asynchronously (don't block registration)
         logger.info(f"[REGISTER] Calling notification service for user: {user.username}")
         try:
@@ -55,7 +55,7 @@ async def register(
         except Exception as notif_error:
             # Log but don't fail registration if notification fails
             logger.error(f"[REGISTER] Failed to send registration notification: {notif_error}", exc_info=True)
-        
+
         return user
     except ValueError as e:
         logger.warning(f"Validation error during registration: {e}")
@@ -78,7 +78,7 @@ async def login(
 ):
     """Login user and return JWT token."""
     auth_service = AuthService(db)
-    
+
     user = await auth_service.authenticate_user(form_data.username, form_data.password)
     if not user:
         # Verificar se é usuário inativo ou credenciais incorretas
@@ -93,15 +93,15 @@ async def login(
             detail="Usuário ou senha incorretos",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth_service.create_access_token(
         data={"sub": user.username},
         expires_delta=access_token_expires
     )
-    
+
     logger.info(f"User logged in: {user.username}")
-    
+
     return Token(access_token=access_token, token_type="bearer")
 
 

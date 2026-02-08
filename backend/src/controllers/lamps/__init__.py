@@ -28,7 +28,7 @@ async def get_all_lamps(
 ):
     """
     Get all lamps in the system.
-    
+
     Returns a list of all registered lamps with their current states.
     """
     service = LampService(db)
@@ -43,7 +43,7 @@ async def get_lamps_by_base(
 ):
     """
     Get all lamps for a specific base.
-    
+
     - **base_id**: Base hardware ID
     """
     service = LampService(db)
@@ -58,18 +58,18 @@ async def get_lamp(
 ):
     """
     Get a specific lamp by name.
-    
+
     - **nome**: Lamp name/identifier
     """
     service = LampService(db)
     lamp = await service.get_lamp_by_name(nome)
-    
+
     if not lamp:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Lamp '{nome}' not found"
         )
-    
+
     return lamp
 
 
@@ -80,13 +80,13 @@ async def create_lamp(
 ):
     """
     Create a new lamp.
-    
+
     - **nome**: Lamp name/identifier
     - **base_id**: Base hardware ID this lamp belongs to
     - **estado**: Initial state (default: False)
     """
     service = LampService(db)
-    
+
     # Check if lamp already exists
     existing = await service.get_lamp_by_name(lamp.nome)
     if existing:
@@ -94,7 +94,7 @@ async def create_lamp(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Lamp '{lamp.nome}' already exists"
         )
-    
+
     new_lamp = await service.create_lamp(
         nome=lamp.nome,
         base_id=lamp.base_id,
@@ -112,29 +112,29 @@ async def update_lamp(
 ):
     """
     Update a lamp's properties.
-    
+
     - **lamp_id**: Lamp ID
     - **nome**: New name (optional)
     - **base_id**: New base ID (optional)
     - **estado**: New state (optional)
     """
     service = LampService(db)
-    
+
     update_data = lamp_update.model_dump(exclude_unset=True)
     if not update_data:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No fields to update"
         )
-    
+
     lamp = await service.update_lamp(lamp_id, **update_data)
-    
+
     if not lamp:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Lamp with ID {lamp_id} not found"
         )
-    
+
     return lamp
 
 
@@ -145,18 +145,18 @@ async def delete_lamp(
 ):
     """
     Delete a lamp.
-    
+
     - **lamp_id**: Lamp ID to delete
     """
     service = LampService(db)
     success = await service.delete_lamp(lamp_id)
-    
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Lamp with ID {lamp_id} not found"
         )
-    
+
     return MessageResponse(message=f"Lamp {lamp_id} deleted successfully")
 
 
@@ -167,13 +167,13 @@ async def control_lamp(
 ):
     """
     Control a lamp (turn on/off).
-    
+
     - **nome**: Lamp name
     - **acao**: Action to perform ('ligar' or 'desligar')
     - **origem**: Command origin (default: 'api')
     """
     service = LampService(db)
-    
+
     try:
         if command.acao == "ligar":
             result = await service.turn_on_lamp(command.nome, command.origem)
@@ -184,9 +184,9 @@ async def control_lamp(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid action: {command.acao}. Use 'ligar' or 'desligar'"
             )
-        
+
         return result
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -208,11 +208,11 @@ async def toggle_lamp(
 ):
     """
     Toggle a lamp's state.
-    
+
     - **nome**: Lamp name
     """
     service = LampService(db)
-    
+
     try:
         result = await service.toggle_lamp(nome, "api")
         return result

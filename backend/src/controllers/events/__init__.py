@@ -31,7 +31,7 @@ async def get_event_service(
     mapping_repo = MappingRepository(session)
     lamp_repo = LampRepository(session)
     light_repo = LightRepository(session)
-    
+
     return EventService(
         mapping_repo=mapping_repo,
         lamp_repo=lamp_repo,
@@ -54,25 +54,25 @@ async def inject_event(
 ) -> Dict[str, Any]:
     """
     Inject a manual button event.
-    
+
     This endpoint allows manual triggering of button events for:
     - Testing automation rules
     - Web interface button controls
     - Integration with external systems
-    
+
     The event will be processed through the normal automation pipeline:
     1. Check for duplicates (5 second window)
     2. Find matching mappings
     3. Execute actions (turn on/off lamps, control groups)
     4. Publish MQTT commands
-    
+
     Args:
         event: Button event data (device, button, action)
         event_service: Injected EventService instance
-        
+
     Returns:
         Processing result with executed mappings and actions
-        
+
     Example:
         ```json
         {
@@ -103,12 +103,12 @@ async def list_mappings(
 ) -> List[MappingResponse]:
     """
     List all automation mappings.
-    
+
     Returns all configured mappings including:
     - Active mappings (currently in use)
     - Inactive mappings (disabled)
     - Wildcard mappings (device=*, button=*)
-    
+
     Returns:
         List of all mappings with their configuration
     """
@@ -135,27 +135,27 @@ async def get_mapping(
 ) -> MappingResponse:
     """
     Get a specific mapping by ID.
-    
+
     Args:
         mapping_id: Mapping ID
         session: Database session
-        
+
     Returns:
         Mapping details
-        
+
     Raises:
         404: Mapping not found
     """
     try:
         repo = MappingRepository(session)
         mapping = await repo.get_by_id(mapping_id)
-        
+
         if not mapping:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Mapping {mapping_id} not found"
             )
-        
+
         return MappingResponse.model_validate(mapping)
     except HTTPException:
         raise
@@ -179,16 +179,16 @@ async def create_mapping(
 ) -> MappingResponse:
     """
     Create a new automation mapping.
-    
+
     Defines a rule that triggers actions when a button event occurs.
-    
+
     Args:
         mapping: Mapping data
         session: Database session
-        
+
     Returns:
         Created mapping
-        
+
     Example:
         ```json
         {
@@ -226,23 +226,23 @@ async def update_mapping(
 ) -> MappingResponse:
     """
     Update an existing mapping.
-    
+
     All fields are optional - only provided fields will be updated.
-    
+
     Args:
         mapping_id: Mapping ID to update
         mapping: Updated mapping data
         session: Database session
-        
+
     Returns:
         Updated mapping
-        
+
     Raises:
         404: Mapping not found
     """
     try:
         repo = MappingRepository(session)
-        
+
         # Check if exists
         existing = await repo.get_by_id(mapping_id)
         if not existing:
@@ -250,7 +250,7 @@ async def update_mapping(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Mapping {mapping_id} not found"
             )
-        
+
         # Update
         updated = await repo.update_mapping(mapping_id, mapping)
         return MappingResponse.model_validate(updated)
@@ -275,17 +275,17 @@ async def delete_mapping(
 ):
     """
     Delete a mapping.
-    
+
     Args:
         mapping_id: Mapping ID to delete
         session: Database session
-        
+
     Raises:
         404: Mapping not found
     """
     try:
         repo = MappingRepository(session)
-        
+
         # Check if exists
         existing = await repo.get_by_id(mapping_id)
         if not existing:
@@ -293,7 +293,7 @@ async def delete_mapping(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Mapping {mapping_id} not found"
             )
-        
+
         # Delete
         await repo.delete_mapping(mapping_id)
     except HTTPException:
@@ -317,20 +317,20 @@ async def activate_mapping(
 ) -> MappingResponse:
     """
     Activate (enable) a mapping.
-    
+
     Args:
         mapping_id: Mapping ID to activate
         session: Database session
-        
+
     Returns:
         Updated mapping
-        
+
     Raises:
         404: Mapping not found
     """
     try:
         repo = MappingRepository(session)
-        
+
         # Check if exists
         existing = await repo.get_by_id(mapping_id)
         if not existing:
@@ -338,7 +338,7 @@ async def activate_mapping(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Mapping {mapping_id} not found"
             )
-        
+
         # Activate
         updated = await repo.activate_mapping(mapping_id)
         return MappingResponse.model_validate(updated)
@@ -363,20 +363,20 @@ async def deactivate_mapping(
 ) -> MappingResponse:
     """
     Deactivate (disable) a mapping.
-    
+
     Args:
         mapping_id: Mapping ID to deactivate
         session: Database session
-        
+
     Returns:
         Updated mapping
-        
+
     Raises:
         404: Mapping not found
     """
     try:
         repo = MappingRepository(session)
-        
+
         # Check if exists
         existing = await repo.get_by_id(mapping_id)
         if not existing:
@@ -384,7 +384,7 @@ async def deactivate_mapping(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Mapping {mapping_id} not found"
             )
-        
+
         # Deactivate
         updated = await repo.deactivate_mapping(mapping_id)
         return MappingResponse.model_validate(updated)
@@ -406,12 +406,12 @@ async def deactivate_mapping(
 async def get_cache_stats() -> Dict[str, Any]:
     """
     Get event cache statistics.
-    
+
     Returns information about:
     - Current cache size
     - TTL configuration
     - Hit/miss tracking (if implemented)
-    
+
     Returns:
         Cache statistics
     """

@@ -7,11 +7,11 @@ echo "🔧 Corrigindo configuração do Cloudflare Tunnel..."
 
 # Backup da configuração atual
 echo "📦 Fazendo backup da configuração atual..."
-sudo cp ~/.cloudflared/config.yml ~/.cloudflared/config.yml.backup.$(date +%Y%m%d_%H%M%S)
+sudo cp /etc/cloudflared/config.yml /etc/cloudflared/config.yml.backup.$(date +%Y%m%d_%H%M%S)
 
 # Atualizar o arquivo de configuração
 echo "📝 Atualizando config.yml..."
-sudo tee ~/.cloudflared/config.yml > /dev/null <<EOF
+sudo tee /etc/cloudflared/config.yml > /dev/null <<EOF
 tunnel: 801fa731-1562-4f0a-a9ad-a0115b185ead
 credentials-file: /home/pedro/.cloudflared/801fa731-1562-4f0a-a9ad-a0115b185ead.json
 

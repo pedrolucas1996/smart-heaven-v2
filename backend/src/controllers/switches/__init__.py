@@ -25,7 +25,7 @@ async def get_all_switches(
 ):
     """
     Get all switches for the current user's house.
-    
+
     Returns a list of all registered switches with their states.
     """
     if not current_user.id_house:
@@ -33,7 +33,7 @@ async def get_all_switches(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User is not associated with a house"
         )
-    
+
     service = SwitchService(db)
     switches = await service.get_switches_by_house(current_user.id_house)
     return switches
@@ -46,18 +46,18 @@ async def get_switch(
 ):
     """
     Get a specific switch by name.
-    
+
     - **nome**: Switch name/identifier
     """
     service = SwitchService(db)
     switch = await service.get_switch_by_name(nome)
-    
+
     if not switch:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Switch '{nome}' not found"
         )
-    
+
     return switch
 
 
@@ -68,13 +68,13 @@ async def create_switch(
 ):
     """
     Create a new switch.
-    
+
     - **nome**: Switch name
     - **base**: Base/board name
     - **ativo**: Enabled state (default: true)
     """
     service = SwitchService(db)
-    
+
     # Check if switch already exists
     existing = await service.get_switch_by_name(switch_data.nome)
     if existing:
@@ -82,7 +82,7 @@ async def create_switch(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Switch '{switch_data.nome}' already exists"
         )
-    
+
     from src.repositories.switch_repo import SwitchRepository
     repo = SwitchRepository(db)
     switch = await repo.create({
@@ -92,7 +92,7 @@ async def create_switch(
         "ativo": switch_data.ativo
     })
     await db.commit()
-    
+
     return switch
 
 
@@ -104,31 +104,31 @@ async def update_switch(
 ):
     """
     Update a switch's state.
-    
+
     - **nome**: Switch identifier
     - **ativo**: Enable/disable switch
     - **estado**: Physical button state
     """
     service = SwitchService(db)
     switch = await service.get_switch_by_name(nome)
-    
+
     if not switch:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Switch '{nome}' not found"
         )
-    
+
     from src.repositories.switch_repo import SwitchRepository
     repo = SwitchRepository(db)
-    
+
     if switch_data.ativo is not None:
         switch = await repo.update_active_state(nome, switch_data.ativo)
-    
+
     if switch_data.estado is not None:
         switch = await repo.update_physical_state(nome, switch_data.estado)
-    
+
     await db.commit()
-    
+
     return switch
 
 
@@ -139,23 +139,23 @@ async def control_switch(
 ):
     """
     Enable or disable a switch.
-    
+
     - **botao**: Switch name
     - **acao**: Action to perform ("habilitar" or "desabilitar")
     """
     service = SwitchService(db)
-    
+
     if command.acao == "habilitar":
         result = await service.enable_switch(command.botao)
     else:
         result = await service.disable_switch(command.botao)
-    
+
     if "error" in result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=result["error"]
         )
-    
+
     return MessageResponse(
         message=result["message"],
         success=True
@@ -169,18 +169,18 @@ async def enable_switch(
 ):
     """
     Enable a switch.
-    
+
     - **nome**: Switch identifier
     """
     service = SwitchService(db)
     result = await service.enable_switch(nome)
-    
+
     if "error" in result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=result["error"]
         )
-    
+
     return MessageResponse(
         message=result["message"],
         success=True
@@ -194,18 +194,18 @@ async def disable_switch(
 ):
     """
     Disable a switch.
-    
+
     - **nome**: Switch identifier
     """
     service = SwitchService(db)
     result = await service.disable_switch(nome)
-    
+
     if "error" in result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=result["error"]
         )
-    
+
     return MessageResponse(
         message=result["message"],
         success=True

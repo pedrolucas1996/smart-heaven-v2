@@ -1,4 +1,4 @@
 """Lamps namespace."""
-from src.namespaces.lamps import controller
+from src.controllers import lamps as controller
 
 __all__ = ["controller"]

@@ -12,40 +12,40 @@ logger = logging.getLogger(__name__)
 
 class ConnectionManager:
     """Manage WebSocket connections."""
-    
+
     def __init__(self):
         self.active_connections: Set[WebSocket] = set()
-    
+
     async def connect(self, websocket: WebSocket):
         """Accept and register a new connection."""
         await websocket.accept()
         self.active_connections.add(websocket)
         logger.info(f"Client connected. Total connections: {len(self.active_connections)}")
-    
+
     def disconnect(self, websocket: WebSocket):
         """Remove a connection."""
         self.active_connections.discard(websocket)
         logger.info(f"Client disconnected. Total connections: {len(self.active_connections)}")
-    
+
     async def send_personal_message(self, message: dict, websocket: WebSocket):
         """Send message to a specific client."""
         await websocket.send_json(message)
-    
+
     async def broadcast(self, message: dict):
         """Broadcast message to all connected clients."""
         disconnected = set()
-        
+
         for connection in self.active_connections:
             try:
                 await connection.send_json(message)
             except Exception as e:
                 logger.error(f"Error sending to client: {e}")
                 disconnected.add(connection)
-        
+
         # Clean up disconnected clients
         for connection in disconnected:
             self.active_connections.discard(connection)
-    
+
     async def broadcast_light_update(self, comodo: str, estado: bool, origem: str):
         """Broadcast light state update."""
         message = {
@@ -58,7 +58,7 @@ class ConnectionManager:
             "timestamp": datetime.utcnow().isoformat()
         }
         await self.broadcast(message)
-    
+
     async def broadcast_switch_update(self, nome: str, ativo: bool):
         """Broadcast switch state update."""
         message = {
@@ -70,7 +70,7 @@ class ConnectionManager:
             "timestamp": datetime.utcnow().isoformat()
         }
         await self.broadcast(message)
-    
+
     async def broadcast_event(self, event_type: str, data: dict):
         """Broadcast generic event."""
         message = {
@@ -89,7 +89,7 @@ manager = ConnectionManager()
 async def websocket_endpoint(websocket: WebSocket):
     """
     WebSocket endpoint for real-time updates.
-    
+
     Clients can receive:
     - light_update: Light state changes
     - switch_update: Switch enable/disable events
@@ -97,7 +97,7 @@ async def websocket_endpoint(websocket: WebSocket):
     - mqtt_event: General MQTT events
     """
     await manager.connect(websocket)
-    
+
     try:
         # Send welcome message
         await manager.send_personal_message(
@@ -108,15 +108,15 @@ async def websocket_endpoint(websocket: WebSocket):
             },
             websocket
         )
-        
+
         # Keep connection alive and handle incoming messages
         while True:
             data = await websocket.receive_text()
-            
+
             try:
                 message = json.loads(data)
                 logger.info(f"Received WebSocket message: {message}")
-                
+
                 # Echo back for now (can be extended for commands)
                 await manager.send_personal_message(
                     {
@@ -135,7 +135,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     },
                     websocket
                 )
-    
+
     except WebSocketDisconnect:
         manager.disconnect(websocket)
     except Exception as e:

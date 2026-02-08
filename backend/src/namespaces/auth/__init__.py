@@ -1,4 +1,4 @@
 """Auth namespace package."""
-from src.namespaces.auth import controller
+from src.controllers import auth as controller
 
 __all__ = ["controller"]

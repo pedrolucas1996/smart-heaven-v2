@@ -18,6 +18,8 @@ class MQTTService:
         self.is_connected = False
         self.message_handlers: Dict[str, Callable] = {}
         self._task: Optional[asyncio.Task] = None
+        self._connect_lock = asyncio.Lock()
+        self._reconnecting = False
     
     async def connect(self):
         """Connect to MQTT broker."""
@@ -38,6 +40,12 @@ class MQTTService:
             await self.client.__aenter__()
             self.is_connected = True
             logger.info(f"Connected to MQTT broker at {settings.MQTT_BROKER_HOST}")
+
+            # Restore subscriptions after reconnect
+            if self.message_handlers:
+                for topic in self.message_handlers.keys():
+                    await self.client.subscribe(topic)
+                logger.info("Re-subscribed to MQTT topics after reconnect")
             
             # Start message loop
             self._task = asyncio.create_task(self._message_loop())
@@ -60,11 +68,32 @@ class MQTTService:
             await self.client.__aexit__(None, None, None)
             self.is_connected = False
             logger.info("Disconnected from MQTT broker")
+        self.client = None
+        self._task = None
+
+    async def ensure_connected(self):
+        """Ensure MQTT client is connected (with reconnect)."""
+        if self.client and self.is_connected:
+            return
+
+        async with self._connect_lock:
+            if self.client and self.is_connected:
+                return
+
+            if self.client and not self.is_connected:
+                try:
+                    await self.client.__aexit__(None, None, None)
+                except Exception:
+                    pass
+                self.client = None
+                self._task = None
+
+            await self.connect()
     
     async def subscribe(self, topic: str, handler: Callable):
         """Subscribe to a topic with a handler."""
         if not self.client:
-            raise RuntimeError("MQTT client not connected")
+            await self.ensure_connected()
         
         await self.client.subscribe(topic)
         self.message_handlers[topic] = handler
@@ -72,8 +101,8 @@ class MQTTService:
     
     async def publish(self, topic: str, payload: dict):
         """Publish a message to a topic."""
-        if not self.client:
-            raise RuntimeError("MQTT client not connected")
+        if not self.client or not self.is_connected:
+            await self.ensure_connected()
         
         try:
             message = json.dumps(payload)
@@ -81,7 +110,13 @@ class MQTTService:
             logger.debug(f"Published to {topic}: {message}")
         except Exception as e:
             logger.error(f"Failed to publish to {topic}: {e}")
-            raise
+            self.is_connected = False
+            try:
+                await self.ensure_connected()
+                await self.client.publish(topic, message)
+                logger.debug(f"Published to {topic} after reconnect: {message}")
+            except Exception:
+                raise
     
     async def publish_state(self, comodo: str, estado: str):
         """Publish light state."""
@@ -103,6 +138,19 @@ class MQTTService:
         except Exception as e:
             logger.error(f"Error in message loop: {e}")
             self.is_connected = False
+            await self._reconnect()
+
+    async def _reconnect(self):
+        if self._reconnecting:
+            return
+        self._reconnecting = True
+        try:
+            await asyncio.sleep(1)
+            await self.ensure_connected()
+        except Exception as e:
+            logger.error(f"MQTT reconnect failed: {e}")
+        finally:
+            self._reconnecting = False
     
     async def _handle_message(self, message: Message):
         """Handle incoming MQTT message."""

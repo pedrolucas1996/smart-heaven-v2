@@ -15,15 +15,8 @@ from src.services.switch_service import SwitchService
 from src.services.event_service import EventService
 from src.services.legacy_adapter import LegacyAdapter
 from src.namespaces.events.schemas import EventPayload, StatePayload, LightState, Origin
-from src.namespaces.lights import controller as lights
-from src.namespaces.lamps import controller as lamps
-from src.namespaces.switches import controller as switches
-from src.namespaces.system import controller as system
-from src.namespaces.events import controller as events
-from src.namespaces.websocket import controller as websocket
-
-from src.namespaces.casas import controller as casas
-from src.namespaces.auth import controller as auth
+from src.controllers import lights, lamps, switches, system, events, websocket
+from src.controllers import casas, auth
 
 
 # Configure logging
