@@ -1,4 +1,5 @@
 """Authentication service for user management and JWT tokens."""
+import logging
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -9,6 +10,9 @@ from sqlalchemy import select
 from src.core.config import settings
 from src.models.user import User
 from src.schemas.user import UserCreate, TokenData
+
+
+logger = logging.getLogger(__name__)
 
 
 # Password hashing context
@@ -49,13 +53,21 @@ class AuthService:
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash."""
         plain_password = AuthService._truncate_password(plain_password)
-        return pwd_context.verify(plain_password, hashed_password)
+        try:
+            return pwd_context.verify(plain_password, hashed_password)
+        except Exception as e:
+            logger.error("Password verification backend failure: %s", e, exc_info=True)
+            return False
     
     @staticmethod
     def get_password_hash(password: str) -> str:
         """Hash a password."""
         password = AuthService._truncate_password(password)
-        return pwd_context.hash(password)
+        try:
+            return pwd_context.hash(password)
+        except Exception as e:
+            logger.error("Password hashing backend failure: %s", e, exc_info=True)
+            raise ValueError("Password hashing service unavailable") from e
     
     @staticmethod
     def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
