@@ -70,18 +70,21 @@ class LampService:
             raise ValueError(f"Lamp {nome} not found. Please create it first with a base_id.")
         
         lamp = await self.lamp_repo.update_state(nome, estado)
+
+        # Use hardware identifier for MQTT when available
+        mqtt_target = (lamp.comodo or lamp.nome).strip()
         
         # Create log
         await self.log_repo.create_log(nome, estado, origem, lamp.id_house)
         
         # Prepare MQTT command
         acao = "ligar" if estado else "desligar"
-        mqtt_payload = {"comodo": nome, "acao": acao}
+        mqtt_payload = {"comodo": mqtt_target, "acao": acao}
         
         # Determine the correct MQTT topic
-        if nome == "L_Portao":
+        if mqtt_target == "L_Portao":
             topic = settings.MQTT_TOPIC_ESP_COMMAND
-        elif nome in ["L_Jardim", "L_Escritorio", "L_Banheirogeral", "LED_Azul", "LED_Bancada"]:
+        elif mqtt_target in ["L_Jardim", "L_Escritorio", "L_Banheirogeral", "LED_Azul", "LED_Bancada"]:
             topic = settings.MQTT_TOPIC_COMMAND
         else:
             topic = settings.MQTT_TOPIC_COMMAND
@@ -89,10 +92,10 @@ class LampService:
         # Publish to MQTT
         try:
             await mqtt_service.publish(topic, mqtt_payload)
-            await mqtt_service.publish_state(nome, "on" if estado else "off")
-            logger.info(f"Lamp {nome} turned {acao} via {origem}")
+            await mqtt_service.publish_state(mqtt_target, "on" if estado else "off")
+            logger.info(f"Lamp {nome} ({mqtt_target}) turned {acao} via {origem}")
         except Exception as e:
-            logger.error(f"Failed to publish MQTT command for {nome}: {e}")
+            logger.error(f"Failed to publish MQTT command for {nome} ({mqtt_target}): {e}")
         
         # Handle grouped lights
         if nome in LIGHT_GROUPS:
