@@ -96,6 +96,7 @@ class LampService:
             logger.info(f"Lamp {nome} ({mqtt_target}) turned {acao} via {origem}")
         except Exception as e:
             logger.error(f"Failed to publish MQTT command for {nome} ({mqtt_target}): {e}")
+            raise RuntimeError(f"MQTT publish failed for {mqtt_target}") from e
         
         # Handle grouped lights
         if nome in LIGHT_GROUPS:

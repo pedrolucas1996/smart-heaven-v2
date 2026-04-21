@@ -72,8 +72,9 @@ class MQTTService:
     
     async def publish(self, topic: str, payload: dict):
         """Publish a message to a topic."""
-        if not self.client:
-            raise RuntimeError("MQTT client not connected")
+        if not self.client or not self.is_connected:
+            logger.warning("MQTT not connected at publish time. Trying to reconnect...")
+            await self.connect()
         
         try:
             message = json.dumps(payload)
@@ -81,6 +82,17 @@ class MQTTService:
             logger.debug(f"Published to {topic}: {message}")
         except Exception as e:
             logger.error(f"Failed to publish to {topic}: {e}")
+            self.is_connected = False
+
+            # Retry once after reconnect if connection dropped
+            if "not currently connected" in str(e).lower() or "code:4" in str(e).lower():
+                logger.warning("MQTT connection dropped. Reconnecting and retrying publish once...")
+                await self.connect()
+                message = json.dumps(payload)
+                await self.client.publish(topic, message)
+                logger.debug(f"Published to {topic} after reconnect: {message}")
+                return
+
             raise
     
     async def publish_state(self, comodo: str, estado: str):
