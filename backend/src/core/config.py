@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:5173",
+        "https://smart-heaven.com",
         "https://www.smart-heaven.com"
     ]
     
