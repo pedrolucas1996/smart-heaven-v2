@@ -24,8 +24,4 @@ services:
       dockerfile: Dockerfile
     container_name: smart-heaven-frontend
     restart: unless-stopped
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     network_mode: host
-    command: npm run dev -- --host 0.0.0.0 --port 5173
