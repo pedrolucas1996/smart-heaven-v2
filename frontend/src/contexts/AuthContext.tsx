@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api/v1').replace(/\/$/, '');
+
 interface User {
   id: number;
   username: string;
@@ -47,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchCurrentUser = async (authToken: string) => {
     try {
-      const response = await axios.get('/api/v1/auth/me', {
+      const response = await axios.get(`${API_BASE_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setUser(response.data);
@@ -66,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     formData.append('password', password);
 
     const response = await axios.post(
-      'https://api.smart-heaven.com/api/v1/auth/login',
+      `${API_BASE_URL}/auth/login`,
       formData,
       {
         headers: {
@@ -83,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (username: string, email: string, password: string) => {
     try {
-      const response = await axios.post('/api/v1/auth/register', {
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, {
         username,
         email,
         password,
