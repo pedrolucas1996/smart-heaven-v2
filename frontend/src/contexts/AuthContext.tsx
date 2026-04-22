@@ -30,10 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Load token from localStorage on mount
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
-    if (storedToken) {
+    if (storedToken && storedToken !== 'undefined' && storedToken !== 'null') {
       setToken(storedToken);
       fetchCurrentUser(storedToken);
     } else {
+      localStorage.removeItem('token');
       setIsLoading(false);
     }
   }, []);
@@ -77,10 +78,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    const { access_token } = response.data;
-    setToken(access_token);
-    localStorage.setItem('token', access_token);
-    await fetchCurrentUser(access_token);
+    const tokenFromResponse = response?.data?.access_token || response?.data?.token;
+
+    if (!tokenFromResponse || typeof tokenFromResponse !== 'string') {
+      console.error('Login response without token:', response?.data);
+      throw new Error('Login retornou sem token. Verifique a resposta do backend (/auth/login).');
+    }
+
+    setToken(tokenFromResponse);
+    localStorage.setItem('token', tokenFromResponse);
+    await fetchCurrentUser(tokenFromResponse);
   };
 
   const register = async (username: string, email: string, password: string) => {
