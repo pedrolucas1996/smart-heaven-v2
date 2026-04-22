@@ -1,0 +1,23 @@
+services:
+backend:
+build:
+context: ./backend
+dockerfile: Dockerfile
+container_name: smart-heaven-backend
+restart: unless-stopped
+environment:
+- DATABASE_URL=mysql+aiomysql://pedro:395967@192.168.31.153:3306/smartheaven
+- MQTT_BROKER_HOST=192.168.31.153
+- MQTT_BROKER_PORT=1883
+volumes:
+- ./backend:/app
+network_mode: host
+command: uvicorn src.main:app --host 0.0.0.0 --port 8000
+
+frontend:
+build:
+context: ./frontend
+dockerfile: Dockerfile
+container_name: smart-heaven-frontend
+restart: unless-stopped
+network_mode: host
