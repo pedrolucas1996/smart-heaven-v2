@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     formData.append('password', password);
 
     const response = await axios.post(
-      '/api/v1/auth/login',
+      'https://api.smart-heaven.com/api/v1/auth/login',
       formData,
       {
         headers: {
