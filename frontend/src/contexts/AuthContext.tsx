@@ -1,6 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 
+declare global {
+  interface Window {
+    __SH_TOKEN__?: string;
+  }
+}
+
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api/v1').replace(/\/$/, '');
 
 const getStoredToken = () => {
@@ -44,11 +50,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Keep both keys synced for backward compatibility
       localStorage.setItem('token', storedToken);
       localStorage.setItem('access_token', storedToken);
+      window.__SH_TOKEN__ = storedToken;
       setToken(storedToken);
       fetchCurrentUser(storedToken);
     } else {
       localStorage.removeItem('token');
       localStorage.removeItem('access_token');
+      window.__SH_TOKEN__ = undefined;
       setIsLoading(false);
     }
   }, []);
@@ -57,8 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      window.__SH_TOKEN__ = token;
     } else {
       delete axios.defaults.headers.common['Authorization'];
+      window.__SH_TOKEN__ = undefined;
     }
   }, [token]);
 
@@ -77,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (status === 401 || status === 403) {
         localStorage.removeItem('token');
         localStorage.removeItem('access_token');
+        window.__SH_TOKEN__ = undefined;
         setToken(null);
       }
     } finally {
@@ -109,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(tokenFromResponse);
     localStorage.setItem('token', tokenFromResponse);
     localStorage.setItem('access_token', tokenFromResponse);
+    window.__SH_TOKEN__ = tokenFromResponse;
     await fetchCurrentUser(tokenFromResponse);
   };
 
@@ -133,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('access_token');
+    window.__SH_TOKEN__ = undefined;
   };
 
   return (

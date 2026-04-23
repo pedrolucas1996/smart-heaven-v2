@@ -1,5 +1,11 @@
 import axios from 'axios';
 
+declare global {
+  interface Window {
+    __SH_TOKEN__?: string;
+  }
+}
+
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api/v1').replace(/\/$/, '');
 
 const api = axios.create({
@@ -10,10 +16,19 @@ const api = axios.create({
   },
 });
 
+const getAuthToken = () => {
+  return (
+    localStorage.getItem('token') ||
+    localStorage.getItem('access_token') ||
+    window.__SH_TOKEN__ ||
+    null
+  );
+};
+
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+    const token = getAuthToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

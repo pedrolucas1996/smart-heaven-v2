@@ -8,17 +8,42 @@ export interface WSMessage {
 
 type MessageHandler = (message: WSMessage) => void;
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api/v1').replace(/\/$/, '');
+
+const resolveWebSocketUrl = (customUrl?: string) => {
+  if (customUrl) {
+    return customUrl;
+  }
+
+  // If API base is absolute (e.g., https://api.smart-heaven.com/api/v1)
+  if (/^https?:\/\//i.test(API_BASE_URL)) {
+    return `${API_BASE_URL.replace(/^http/i, 'ws')}/ws`;
+  }
+
+  // Relative API base (local/dev via same host/proxy)
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  return `${wsProtocol}://${window.location.host}${API_BASE_URL}/ws`;
+};
+
 export const useWebSocket = (url?: string) => {
-  // Use URL dinâmica baseada no host atual, mas porta 8000 para o backend
-  const wsUrl = url || `ws://${window.location.hostname}:8000/api/v1/ws`;
+  const wsUrl = resolveWebSocketUrl(url);
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<WSMessage | null>(null);
   const ws = useRef<WebSocket | null>(null);
   const handlers = useRef<Map<string, MessageHandler[]>>(new Map());
 
   useEffect(() => {
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
     const connect = () => {
-      ws.current = new WebSocket(wsUrl);
+      try {
+        ws.current = new WebSocket(wsUrl);
+      } catch (error) {
+        console.error('WebSocket initialization error:', error);
+        setIsConnected(false);
+        reconnectTimer = setTimeout(connect, 3000);
+        return;
+      }
 
       ws.current.onopen = () => {
         console.log('WebSocket connected');
@@ -51,13 +76,16 @@ export const useWebSocket = (url?: string) => {
         setIsConnected(false);
         
         // Reconnect after 3 seconds
-        setTimeout(connect, 3000);
+        reconnectTimer = setTimeout(connect, 3000);
       };
     };
 
     connect();
 
     return () => {
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
       if (ws.current) {
         ws.current.close();
       }
