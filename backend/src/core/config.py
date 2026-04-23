@@ -1,4 +1,5 @@
 """Application configuration using Pydantic Settings."""
+import json
 from typing import List
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -67,7 +68,37 @@ class Settings(BaseSettings):
     def parse_cors_origins(cls, v):
         """Parse CORS origins from string or list."""
         if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
+            raw = v.strip()
+            if not raw:
+                return []
+
+            # Support JSON list format, e.g.
+            # CORS_ORIGINS=["https://smart-heaven.com","https://www.smart-heaven.com"]
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, list):
+                    return [
+                        str(origin).strip().strip('"').strip("'")
+                        for origin in parsed
+                        if str(origin).strip()
+                    ]
+            except json.JSONDecodeError:
+                pass
+
+            # Fallback: comma-separated string
+            return [
+                origin.strip().strip('"').strip("'").strip("[]")
+                for origin in raw.split(",")
+                if origin.strip()
+            ]
+
+        if isinstance(v, list):
+            return [
+                str(origin).strip().strip('"').strip("'")
+                for origin in v
+                if str(origin).strip()
+            ]
+
         return v
 
 
