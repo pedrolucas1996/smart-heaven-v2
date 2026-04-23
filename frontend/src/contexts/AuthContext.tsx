@@ -3,6 +3,16 @@ import axios from 'axios';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api/v1').replace(/\/$/, '');
 
+const getStoredToken = () => {
+  const token = localStorage.getItem('token');
+  const accessToken = localStorage.getItem('access_token');
+  const candidate = token || accessToken;
+  if (!candidate || candidate === 'undefined' || candidate === 'null') {
+    return null;
+  }
+  return candidate;
+};
+
 interface User {
   id: number;
   username: string;
@@ -29,12 +39,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Load token from localStorage on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken && storedToken !== 'undefined' && storedToken !== 'null') {
+    const storedToken = getStoredToken();
+    if (storedToken) {
+      // Keep both keys synced for backward compatibility
+      localStorage.setItem('token', storedToken);
+      localStorage.setItem('access_token', storedToken);
       setToken(storedToken);
       fetchCurrentUser(storedToken);
     } else {
       localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
       setIsLoading(false);
     }
   }, []);
@@ -57,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to fetch current user:', error);
       localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
       setToken(null);
     } finally {
       setIsLoading(false);
@@ -87,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setToken(tokenFromResponse);
     localStorage.setItem('token', tokenFromResponse);
+    localStorage.setItem('access_token', tokenFromResponse);
     await fetchCurrentUser(tokenFromResponse);
   };
 
@@ -110,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
   };
 
   return (
