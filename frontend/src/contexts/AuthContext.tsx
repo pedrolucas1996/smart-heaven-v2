@@ -68,11 +68,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setUser(response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch current user:', error);
-      localStorage.removeItem('token');
-      localStorage.removeItem('access_token');
-      setToken(null);
+      const status = error?.response?.status;
+
+      // Only clear auth data when token is actually invalid/forbidden.
+      // For transient/network/backend errors, keep token to avoid logout loops.
+      if (status === 401 || status === 403) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('access_token');
+        setToken(null);
+      }
     } finally {
       setIsLoading(false);
     }
