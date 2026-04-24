@@ -82,3 +82,7 @@ mosquitto/log/*
 
 # Alembic
 alembic/versions/*.pyc
+
+# Frontend source libraries (must be tracked)
+!frontend/src/lib/
+!frontend/src/lib/**
