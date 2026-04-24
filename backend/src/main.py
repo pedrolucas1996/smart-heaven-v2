@@ -1,4 +1,5 @@
 """FastAPI application main entry point."""
+import asyncio
 import logging
 import json
 from datetime import datetime
@@ -41,7 +42,7 @@ async def lifespan(app: FastAPI):
     
     # Initialize database
     try:
-        await init_db()
+        await asyncio.wait_for(init_db(), timeout=20)
         logger.info("Database initialized")
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
@@ -52,7 +53,7 @@ async def lifespan(app: FastAPI):
     
     # Connect to MQTT broker
     try:
-        await mqtt_service.connect()
+        await asyncio.wait_for(mqtt_service.connect(), timeout=10)
         logger.info("MQTT connected")
         
         # Subscribe to topics with async handlers
@@ -186,21 +187,33 @@ async def lifespan(app: FastAPI):
             except Exception as e:
                 logger.error(f"Error processing legacy server command: {e}")
         
-        await mqtt_service.subscribe(
-            f"{settings.MQTT_TOPIC_STATE}/#",
-            handle_state_update
+        await asyncio.wait_for(
+            mqtt_service.subscribe(
+                f"{settings.MQTT_TOPIC_STATE}/#",
+                handle_state_update
+            ),
+            timeout=5,
         )
-        await mqtt_service.subscribe(
-            settings.MQTT_TOPIC_BUTTON,
-            handle_button_event
+        await asyncio.wait_for(
+            mqtt_service.subscribe(
+                settings.MQTT_TOPIC_BUTTON,
+                handle_button_event
+            ),
+            timeout=5,
         )
-        await mqtt_service.subscribe(
-            settings.MQTT_TOPIC_WEB_COMMAND,
-            handle_web_command
+        await asyncio.wait_for(
+            mqtt_service.subscribe(
+                settings.MQTT_TOPIC_WEB_COMMAND,
+                handle_web_command
+            ),
+            timeout=5,
         )
-        await mqtt_service.subscribe(
-            "casa/servidor/comando_lampada",
-            handle_legacy_server_command
+        await asyncio.wait_for(
+            mqtt_service.subscribe(
+                "casa/servidor/comando_lampada",
+                handle_legacy_server_command
+            ),
+            timeout=5,
         )
         
         logger.info("MQTT subscriptions configured with EventService")
@@ -209,7 +222,7 @@ async def lifespan(app: FastAPI):
     
     # Start cleanup scheduler
     try:
-        await scheduler.start()
+        await asyncio.wait_for(scheduler.start(), timeout=5)
         logger.info("Cleanup scheduler started")
     except Exception as e:
         logger.error(f"Failed to start scheduler: {e}")
