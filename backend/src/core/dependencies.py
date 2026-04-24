@@ -11,6 +11,7 @@ from src.models.user import User
 
 # OAuth2 scheme for token authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
 async def get_db() -> AsyncSession:
@@ -53,3 +54,27 @@ async def get_current_active_user(
             detail="Inactive user"
         )
     return current_user
+
+
+async def get_optional_current_user(
+    token: Optional[str] = Depends(optional_oauth2_scheme),
+    db: AsyncSession = Depends(get_db)
+) -> Optional[User]:
+    """Try to get current user from JWT token, returning None if unavailable/invalid."""
+    if not token:
+        return None
+
+    try:
+        auth_service = AuthService(db)
+        token_data = auth_service.decode_token(token)
+
+        if token_data is None or token_data.username is None:
+            return None
+
+        user = await auth_service.get_user_by_username(token_data.username)
+        if user is None or not user.is_active:
+            return None
+
+        return user
+    except Exception:
+        return None

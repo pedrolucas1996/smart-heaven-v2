@@ -1,5 +1,5 @@
 """Switch management controller."""
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,7 +12,7 @@ from src.namespaces.switches.schemas import (
 )
 from src.namespaces.system.schemas import MessageResponse
 from src.services.switch_service import SwitchService
-from src.core.dependencies import get_current_active_user
+from src.core.dependencies import get_optional_current_user
 from src.models.user import User
 
 router = APIRouter(prefix="/switches", tags=["Switches"])
@@ -21,21 +21,18 @@ router = APIRouter(prefix="/switches", tags=["Switches"])
 @router.get("", response_model=List[SwitchResponse])
 async def get_all_switches(
     db: AsyncSession = Depends(get_database),
-    current_user: User = Depends(get_current_active_user)
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """
     Get all switches for the current user's house.
     
     Returns a list of all registered switches with their states.
     """
-    if not current_user.id_house:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is not associated with a house"
-        )
-    
     service = SwitchService(db)
-    switches = await service.get_switches_by_house(current_user.id_house)
+    if current_user and current_user.id_house:
+        switches = await service.get_switches_by_house(current_user.id_house)
+    else:
+        switches = await service.get_all_switches()
     return switches
 
 
