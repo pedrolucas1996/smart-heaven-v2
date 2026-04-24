@@ -31,6 +31,9 @@ async function fetchApi<T>(
   const token = getAuthToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0',
   };
 
   // Merge with existing headers if provided
@@ -57,6 +60,7 @@ async function fetchApi<T>(
     try {
       const response = await fetch(url, {
         headers,
+        cache: 'no-store',
         ...options,
       });
 
