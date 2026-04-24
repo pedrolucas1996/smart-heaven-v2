@@ -4,7 +4,7 @@ import logging
 import json
 from datetime import datetime
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.core.config import settings
@@ -271,6 +271,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def disable_api_caching(request: Request, call_next):
+    """Disable cache for API responses to avoid stale state in proxies/CDN/browsers."""
+    response = await call_next(request)
+
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+
+    return response
 
 # Include routers
 app.include_router(auth.router, prefix="/api/v1")
