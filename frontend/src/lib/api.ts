@@ -135,52 +135,66 @@ async function fetchApi<T>(
 export const lightsApi = {
   // GET: Buscar todas as lâmpadas
   getAll: async () => {
-    const response = await fetchApi<any[]>('/lights', { method: 'GET' });
+    const lampsResponse = await fetchApi<any[]>('/lamps', { method: 'GET' });
+    const lightsResponse = await fetchApi<any[]>('/lights', { method: 'GET' });
 
-    if (!response.success || !response.data) {
-      // Backward-compatible fallback
-      const fallback = await fetchApi<any[]>('/lamps', { method: 'GET' });
-      if (!fallback.success || !fallback.data) {
-        return fallback;
-      }
-
-      const normalizedFallback = fallback.data.map((item) => ({
+    const normalize = (items: any[] = []) =>
+      items.map((item) => ({
         ...item,
         nome: item.nome ?? item.lampada,
         apelido: item.apelido ?? null,
         invertido: typeof item.invertido === 'boolean' ? item.invertido : false,
       }));
 
-      const dedupFallbackMap = new Map<string, any>();
-      normalizedFallback.forEach((lamp: any) => {
+    const dedupByName = (items: any[]) => {
+      const dedupMap = new Map<string, any>();
+      items.forEach((lamp: any) => {
         const key = String(lamp.nome ?? lamp.lampada ?? lamp.id);
-        const prev = dedupFallbackMap.get(key);
+        const prev = dedupMap.get(key);
         if (!prev || (lamp.id ?? 0) > (prev.id ?? 0)) {
-          dedupFallbackMap.set(key, lamp);
+          dedupMap.set(key, lamp);
         }
       });
+      return Array.from(dedupMap.values());
+    };
 
-      return { success: true, data: Array.from(dedupFallbackMap.values()) };
+    const lampsData = lampsResponse.success && lampsResponse.data ? normalize(lampsResponse.data) : [];
+    const lightsData = lightsResponse.success && lightsResponse.data ? normalize(lightsResponse.data) : [];
+
+    // Preferred strategy: full inventory from /lamps + latest state from /lights
+    if (lampsData.length > 0) {
+      const stateByName = new Map<string, any>();
+      lightsData.forEach((light) => {
+        const key = String(light.nome ?? light.lampada ?? light.id);
+        stateByName.set(key, light);
+      });
+
+      const merged = lampsData.map((lamp) => {
+        const key = String(lamp.nome ?? lamp.lampada ?? lamp.id);
+        const live = stateByName.get(key);
+        if (!live) {
+          return lamp;
+        }
+
+        return {
+          ...lamp,
+          estado: typeof live.estado === 'boolean' ? live.estado : lamp.estado,
+          data_de_atualizacao: live.data_de_atualizacao ?? lamp.data_de_atualizacao,
+        };
+      });
+
+      return { success: true, data: dedupByName(merged) };
     }
 
-    const normalized = response.data.map((item) => ({
-      ...item,
-      nome: item.nome ?? item.lampada,
-      apelido: item.apelido ?? null,
-      invertido: typeof item.invertido === 'boolean' ? item.invertido : false,
-    }));
+    // Fallback to /lights if /lamps inventory is unavailable
+    if (lightsData.length > 0) {
+      return { success: true, data: dedupByName(lightsData) };
+    }
 
-    // Remove duplicates by lamp name, keeping latest ID
-    const dedupMap = new Map<string, any>();
-    normalized.forEach((lamp: any) => {
-      const key = String(lamp.nome ?? lamp.lampada ?? lamp.id);
-      const prev = dedupMap.get(key);
-      if (!prev || (lamp.id ?? 0) > (prev.id ?? 0)) {
-        dedupMap.set(key, lamp);
-      }
-    });
-
-    return { success: true, data: Array.from(dedupMap.values()) };
+    return {
+      success: false,
+      error: lampsResponse.error || lightsResponse.error || 'Erro ao carregar luzes',
+    };
   },
 
   // POST: Ligar/desligar lâmpada - SH2 usa toggle endpoint
